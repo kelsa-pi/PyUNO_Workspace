@@ -45,7 +45,3 @@ BSD
 ## Status
 Alpha - no warranty whatsoever and use at your own risk.
 
-<p align="center">
-    <b>Contex menue</b>
-    <img src="/image/contextmenu.png">
-</p>
