@@ -5,7 +5,7 @@ Pyzo IDE object introspection plugin for LibreOffice API.
 
 <p align="center">
     <b>PyUNO Workspace</b>
-    <img src="/image/workspace.png">
+    <img src="/images/workspace.png">
 </p>
 
  
