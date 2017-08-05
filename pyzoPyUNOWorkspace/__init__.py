@@ -29,7 +29,21 @@ config.read(conf_file)
 conf_dash = configStringToInt(config.get('GENERAL', 'dash'))
 conf_unostarter = configStringToInt(config.get('GENERAL', 'unostarter'))
 
-# Set dokumentation browser
+def getWorkspaceMenu(help_browser):
+    """Set wokspace context menu"""
+    workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search snippets']
+    dash_menu = ['sep', 'Search in ' + help_browser]
+    unostarter_menu = ['sep', 'Inspect in shell - pyuno', 'Inspect in shell - PyUNO_callable']
+
+    if conf_dash == 2:
+        workspace_menu = workspace_menu + dash_menu
+
+    if conf_unostarter == 2:
+        workspace_menu = workspace_menu + unostarter_menu
+
+    return workspace_menu
+
+# Set documentation browser
 help_browser = getDocumentationBrowser()
 
 # Set workspace context menu    
