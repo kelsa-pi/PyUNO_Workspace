@@ -1,11 +1,13 @@
 # PyUNO Workspace
 
 <p align="center">
-    <b>Pyzo IDE object introspection plugin for LibreOffice UNO API</b>
+    <b>Pyzo IDE object introspection plugin for PyUNO and LibreOffice UNO API</b>
     <img src="/images/workspace.png">
 </p>
 
- 
+Adapted version of the Pyzo IDE tool Workspace. 
+
+
 ## Features
 
 * inspect Python and PyUNO objects
