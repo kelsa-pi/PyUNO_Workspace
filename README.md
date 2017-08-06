@@ -11,7 +11,7 @@ Pyzo IDE object introspection plugin for LibreOffice API.
 ## Features
 
 * inspect Python and PyUNO objects
-* set argument for properties and methods
+* set argument for properties and methods to drill down
 * for examined objects
   * find code examples
   * find code snippets
