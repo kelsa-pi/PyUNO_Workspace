@@ -24,7 +24,7 @@ Pyzo IDE object introspection plugin for LibreOffice API.
 
 ## Requirements
 
-[Pyzo IDE](https://github.com/pyzo/pyzo) - Runs on Python3 and needs Pyside or PyQt4. There is [binaries](http://www.pyzo.org/start.html) for Windows, Linux and OS X and [installation instructions](http://www.pyzo.org/install.html#install) 
+[Pyzo IDE](https://github.com/pyzo/pyzo) - Runs on Python3 and needs Pyside or PyQt4. There is [binaries](http://www.pyzo.org/start.html) for Windows, Linux and OS X and installation instructions [here](http://www.pyzo.org/install.html#install) 
 
 **Optional (recommended)**
 
