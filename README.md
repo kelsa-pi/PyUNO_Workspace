@@ -5,21 +5,20 @@
     <img src="/images/workspace.png">
 </p>
 
-Adapted version of the Pyzo IDE tool Workspace. 
-
+PyUNO Workspace is a modified version of Pyzo's Workspace, designed for Python and PyUno introspection. 
 
 ## Features
 
 * inspect Python and PyUNO objects
-* set argument for properties and methods to drill down
+* set arguments for methods to drill down
 * for examined objects
   * find code examples
   * find code snippets
 * generate code snippet
 * and more:
-  * search UNO API documentation ([UNO2Dash](https://github.com/kelsa-pi/UNO2Dash))
-  * inspect selected property or method in shell ([unostarter](https://github.com/kelsa-pi/unostarter))
-  * project template for macros or custom scripts ([unostarter](https://github.com/kelsa-pi/unostarter))
+  * search UNO API documentation ([UNO2Dash](https://github.com/kelsa-pi/UNO2Dash) required)
+  * inspect selected property or method in shell ([unostarter](https://github.com/kelsa-pi/unostarter) required)
+  * project template for macros or custom scripts ([unostarter](https://github.com/kelsa-pi/unostarter) required)
 
 
 ## Requirements
