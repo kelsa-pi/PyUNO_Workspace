@@ -3,10 +3,11 @@
 #
 # Pyzo is distributed under the terms of the (new) BSD License.
 # The full license can be found in 'license.txt'.
-# 
+#
 # PyUNO Workspace is a modified version of Pyzo's Workspace tool,
 # designed for Python and PyUno introspection.
 # Author: Sasa Kelecevic, 2017
+#
 
 import os, re, sys, time
 import subprocess, threading, time
