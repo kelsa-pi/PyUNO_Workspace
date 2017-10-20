@@ -7,20 +7,22 @@
 # PyUNO Workspace is a modified version of Pyzo's Workspace tool,
 # designed for Python and PyUno introspection.
 # Author: Sasa Kelecevic, 2017
-#
 
-import os, re, sys, time
-import subprocess, threading, time
+import configparser
+import os
+import re
+from json import load
+from inspect import getsourcefile
+
+import subprocess
+import threading
 import webbrowser
 
 import pyzo
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
-
-import configparser
-
 from .helper import configStringToInt, getDocumentationBrowser
 
-tool_name = "PyUNO Workspace"
+tool_name = pyzo.translate("pyzoPyUNOWorkspace", "PyUNO Workspace")
 tool_summary = "Lists Python and PyUNO variables in the current shell's namespace."
 
 # Read configuration
@@ -31,21 +33,23 @@ config.read(conf_file)
 
 # Get configuration options
 conf_dash = configStringToInt(config.get('GENERAL', 'dash'))
-conf_unostarter = configStringToInt(config.get('GENERAL', 'unostarter'))
+
+# JSON serialization paths
+WORKSPACE_PATH = os.path.abspath(getsourcefile(lambda: 0))
+WORKSPACE_DIR = os.path.dirname(WORKSPACE_PATH)
+RESULTFILE = 'result.txt'
+
 
 def getWorkspaceMenu(help_browser):
-    """Set wokspace context menu"""
+    """ Set wokspace context menu. """
     workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search snippets']
     dash_menu = ['sep', 'Search in ' + help_browser]
-    unostarter_menu = ['sep', 'Inspect in shell - pyuno', 'Inspect in shell - PyUNO_callable']
-
+    
     if conf_dash == 2:
         workspace_menu = workspace_menu + dash_menu
 
-    if conf_unostarter == 2:
-        workspace_menu = workspace_menu + unostarter_menu
-
     return workspace_menu
+
 
 # Set documentation browser
 help_browser = getDocumentationBrowser()
@@ -53,8 +57,8 @@ help_browser = getDocumentationBrowser()
 # Set workspace context menu    
 workspace_menu = getWorkspaceMenu(help_browser)
 
-# Frequently used argument 
-drill = ['getByIndex', 'getByName', 'getCellByPosition', 'getCellRangeByPosition', 'getCellRangesByName']
+# Frequently used arguments 
+drill = ['getByIndex', 'getByName', 'getCellByPosition', 'getCellRangeByPosition', 'getCellRangesByName', 'hasByName']
 
 
 def splitName(name):
@@ -90,6 +94,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
 
         # Variables
         self._variables = []
+        self._uno_dict = {}
 
         # Element to get more info of
         self._name = ''
@@ -120,12 +125,17 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         Set the name that we want to know more of.
         """
         self._name = name
-
         shell = pyzo.shells.getCurrentShell()
         if shell:
+            # via unoinspect
+            if str(self._name) == '':
+                pass
+            else:
+                shell.executeCommand("Inspector(context=ctx).inspect(" + str(self._name) + ")\n")
+            # via pyzo
             future = shell._request.dir2(self._name)
             future.add_done_callback(self.processResponse)
-
+        
     def goUp(self):
         """ goUp()
         Cut the last part off the name.
@@ -143,6 +153,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         shell = pyzo.shells.getCurrentShell()
         if not shell:
             self._variables = []
+            self._uno_dict = {}
             self.haveNewData.emit()
 
     def onCurrentShellStateChanged(self):
@@ -153,7 +164,10 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         if not shell:
             # Should never happen I think, but just to be sure
             self._variables = []
+            self._uno_dict = {}
+            
         elif shell._state.lower() != 'busy':
+            # via pyzo
             future = shell._request.dir2(self._name)
             future.add_done_callback(self.processResponse)
 
@@ -171,8 +185,14 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
             print('Introspect-queryDoc-exception: ', future.exception())
         else:
             response = future.result()
-
+        
+        # via pyzo
         self._variables = response
+        
+        # wia unoinspect - read json
+        myfile = os.path.join(WORKSPACE_DIR, RESULTFILE) 
+        with open(myfile) as json_file:  
+            self._uno_dict = load(json_file)
         self.haveNewData.emit()
 
 
@@ -262,6 +282,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # Get text
         req = action.text().lower()
+        print(req)
         # Get current shell
         shell = pyzo.shells.getCurrentShell()
 
@@ -294,16 +315,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             # Search in forum snippets
             url = 'https://forum.openoffice.org/en/forum/search.php?keywords=' + search + '&fid[0]=21'
             webbrowser.open(url)
-
-        elif 'pyuno_callable' in req:
-            # Inspect PyUNO_callable type in shell
-            shell.executeCommand("out= Inspector().inspect(" + ob + ", item='" + search + "', console='yes')\n")
-
-        elif 'pyuno' in req:
-            # Inspect pyuno type in shell
-            a_name = str(action._objectName)
-            shell.executeCommand("out= Inspector().inspect(" + a_name + ", console='yes')\n")
-
+        
         elif 'delete' in req:
             # Delete the variable
             if shell:
@@ -314,8 +326,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         Inspect the attributes of that item.
         # """
 
-        # ADD
-        # line = self.parent()._line
         # argument line
         argument = self.parent()._argument_line.text()
         inspect_item = item.text(0)
@@ -325,7 +335,10 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         else:
             if inspect_item.startswith('get'):
                 inspect_item = inspect_item + '()'
-
+            
+            elif inspect_item in ['hasElements', 'isModified']:
+                inspect_item = inspect_item + '()'
+            
         # set item for inspection
         self._proxy.addNamePart(inspect_item)
 
@@ -343,16 +356,23 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         # Set name
         line = self.parent()._line
         line.setText(self._proxy._name)
-
+        
         # Add elements
         for des in self._proxy._variables:
-
+            
             # Get parts
             parts = des.split(',', 4)
+            
             if len(parts) < 4:
                 continue
 
             name = parts[0]
+            if name[0].islower():
+                try:
+                    parts[-1] = str(self._proxy._uno_dict[name]['repr'])
+                    parts[1] = str(self._proxy._uno_dict[name]['type'])
+                except:
+                    pass
 
             # Pop the 'kind' element
             kind = parts.pop(2)
@@ -366,15 +386,20 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             item = PyUNOWorkspaceItem(parts, 0)
             self.addTopLevelItem(item)
 
-            # Set background color for special methods
+            # Set background color for frequently used
+            # methods with arguments
             if name in drill:
                 item.setBackground(0, QtGui.QColor(224, 224, 224))
+                item.setBackground(1, QtGui.QColor(224, 224, 224))
+                item.setBackground(2, QtGui.QColor(224, 224, 224))
 
             # Set tooltip
             tt = '%s: %s' % (parts[0], parts[-1])
             item.setToolTip(0, tt)
             item.setToolTip(1, tt)
             item.setToolTip(2, tt)
+        
+        self._proxy._uno_dic = {}
 
 
 class PyzoPyUNOWorkspace(QtWidgets.QWidget):
@@ -390,14 +415,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # Make sure there is a configuration entry for this tool
         # The pyzo tool manager makes sure that there is an entry in
         # config.tools before the tool is instantiated.
+        
         toolId = self.__class__.__name__.lower()
         self._config = pyzo.config.tools[toolId]
         if not hasattr(self._config, 'hideTypes'):
             self._config.hideTypes = []
-
-        style = QtWidgets.qApp.style()
-
-        self.argument_tip = 'Add argument and duble clik on method'
 
         # Create tool button
         self._up = QtWidgets.QToolButton(self)
@@ -405,41 +427,25 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._up.setIcon(style.standardIcon(style.SP_ArrowLeft))
         self._up.setIconSize(QtCore.QSize(16, 16))
         self._up.setToolTip("Go back")
-
         # Create "path" line edit
         self._line = QtWidgets.QLineEdit(self)
         self._line.setReadOnly(True)
         self._line.setStyleSheet("QLineEdit { background:#ddd; }")
         self._line.setFocusPolicy(QtCore.Qt.NoFocus)
-
         # Create "insert_code" button
         self._insert_code = QtWidgets.QToolButton(self)
         self._insert_code.setIcon(style.standardIcon(style.SP_FileDialogDetailedView))
         self._insert_code.setToolTip("Insert code in the script at the cursor position")
-
-        # Create "argument_line" line edit
-        self._argument_line = QtWidgets.QLineEdit(self)
-        self._argument_line.setReadOnly(False)
-        self._argument_line.setToolTip(self.argument_tip)
-
+        
         # Create "argument_label" label
         self._argument_label = QtWidgets.QLabel(self)
         self._argument_label.setText("Argument: ")
-
-        # Create option line
-        self._option_label = QtWidgets.QLabel(self)
-        self._option_label.setText("Options: ")
-        self._dash = QtWidgets.QCheckBox(self)
-        self._dash.setText('Dash')
-        self._dash.setCheckState(conf_dash)
-
-        self._unostarter = QtWidgets.QCheckBox(self)
-        self._unostarter.setText('UNOstarter')
-        self._unostarter.setCheckState(conf_unostarter)
-
-        self._option_save = QtWidgets.QToolButton(self)
-        self._option_save.setText('Save')
-
+        # Create "argument_line" line edit
+        self._argument_line = QtWidgets.QLineEdit(self)
+        self._argument_line.setReadOnly(False)
+        self.argument_tip = 'Add argument and duble clik on method.\nExamples:\n"NAME" = object.getByName("NAME"),\n 0 = object.getByIndex(0),\n [space] = object.getMethod( )'
+        self._argument_line.setToolTip(self.argument_tip)
+        
         # Create options menu
         self._options = QtWidgets.QToolButton(self)
         self._options.setIcon(pyzo.icons.filter)
@@ -449,52 +455,63 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._options._menu = QtWidgets.QMenu()
         self._options.setMenu(self._options._menu)
         self.onOptionsPress()  # create menu now
-
+        
         # Create tree
         self._tree = PyUNOWorkspaceTree(self)
-
-        # Set layouts
+        
+        # General Option
+        self._option_label = QtWidgets.QLabel(self)
+        self._option_label.setText("Options: ")
+        self._dash = QtWidgets.QCheckBox(self)
+        self._dash.setText('Dash')
+        self._dash.setCheckState(conf_dash)
+        self._option_save = QtWidgets.QToolButton(self)
+        self._option_save.setText('Save')
+        
+        # ------ Set layouts
+        
+        # Object and insert code layout
         layout_1 = QtWidgets.QHBoxLayout()
         layout_1.addWidget(self._up, 0)
         layout_1.addWidget(self._line, 1)
         layout_1.addWidget(self._insert_code, 0)
-
+        # Argument and option layout
         layout_2 = QtWidgets.QHBoxLayout()
         layout_2.addWidget(self._argument_label, 0)
         layout_2.addWidget(self._argument_line, 0)
         layout_2.addWidget(self._options, 0)
-
+        # Tree layout
         layout_3 = QtWidgets.QVBoxLayout()
         layout_3.addWidget(self._tree, 0)
-
-        layout_4 = QtWidgets.QHBoxLayout()
-        layout_4.addWidget(self._option_label, 0)
-        layout_4.addWidget(self._dash, 0)
-        layout_4.addWidget(self._unostarter, 0)
-        layout_4.addWidget(self._option_save, 0)
-
+        
+        # Options layout
+        layout_6 = QtWidgets.QHBoxLayout()
+        layout_6.addWidget(self._option_label, 0)
+        layout_6.addWidget(self._dash, 0)
+        layout_6.addWidget(self._option_save, 0)
+        
         # Set main layout
         mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.addLayout(layout_1, 0)
         mainLayout.addLayout(layout_2, 0)
         mainLayout.addLayout(layout_3, 0)
-        mainLayout.addLayout(layout_4, 0)
+        mainLayout.addLayout(layout_6, 0)
         mainLayout.setSpacing(2)
         mainLayout.setContentsMargins(4, 4, 4, 4)
         self.setLayout(mainLayout)
 
-        # Bind events
+        # ------ Bind events
         self._up.pressed.connect(self._tree._proxy.goUp)
-        self._insert_code.pressed.connect(self.onWriteCodePress)
+        self._insert_code.pressed.connect(self.onInsertCodeInEditor)
         self._options.pressed.connect(self.onOptionsPress)
         self._options._menu.triggered.connect(self.onOptionMenuTiggered)
-        self._option_save.pressed.connect(self.onOptionsSave)
+        self._option_save.pressed.connect(self.onSaveOptionsInConf)
 
-    def onOptionsSave(self):
-        """ Save options """
+    def onSaveOptionsInConf(self):
+        """ Save options in configuration file. """
+        
         config.set('GENERAL', 'dash', str(self._dash.isChecked()))
-        config.set('GENERAL', 'unostarter', str(self._unostarter.isChecked()))
-
+  
         with open(conf_file, 'w') as configfile:
             config.write(configfile)
 
@@ -528,11 +545,16 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # Update
         self._tree.fillWorkspace()
 
-    def getCode(self):
+    def getCodeSnippet(self):
         """
         """
         line = str(self._line.text())
         data = line.split('.')
+        return self.createCodeSnippet(data)
+    
+    def createCodeSnippet(self, data):
+        """
+        """
         target = 'initial_target'
         code = ''
         for index in range(0, len(data)):
@@ -557,10 +579,9 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         new_code = code
         return new_code
 
-    def onWriteCodePress(self):
-        """ fill playground
-        Update the code generation.
-        """
-        code = self.getCode()
+    def onInsertCodeInEditor(self):
+        """ Insert code snippet in the editor. """
+        
+        code = self.getCodeSnippet()
         editor = pyzo.editors.getCurrentEditor()
         editor.insertPlainText(code)
