@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# PyUNO Workspace helper module
 
 import platform
 
@@ -22,6 +23,8 @@ def getDocumentationBrowser():
         help_browser = 'Velocity'
     
     return help_browser
+    
+
 
 
 
