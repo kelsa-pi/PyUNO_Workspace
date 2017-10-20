@@ -5,7 +5,7 @@
     <img src="/images/workspace.png">
 </p>
 
-PyUNO Workspace is a modified version of Pyzo's Workspace, designed for Python and PyUNO introspection. 
+PyUNO Workspace is a modified version of Pyzo's Workspace plugin, designed for Python and PyUNO introspection. 
 
 ## Features
 
