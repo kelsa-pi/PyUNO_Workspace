@@ -10,15 +10,16 @@ PyUNO Workspace is a modified version of Pyzo's Workspace, designed for Python a
 ## Features
 
 * inspect Python and PyUNO objects
+* display methods with arguments description
 * set arguments for methods to drill down
 * for examined objects
   * find code examples
   * find code snippets
 * generate code snippet
 * and more:
+  * template for macros or custom scripts
   * search UNO API documentation ([UNO2Dash](https://github.com/kelsa-pi/UNO2Dash) required)
-  * inspect selected property or method in shell ([unostarter](https://github.com/kelsa-pi/unostarter) required)
-  * project template for macros or custom scripts ([unostarter](https://github.com/kelsa-pi/unostarter) required)
+  
 
 ## Requirements
 
@@ -29,8 +30,6 @@ PyUNO Workspace is a modified version of Pyzo's Workspace, designed for Python a
 Dash-like offline documentation browser
 
 [UNO2Dash](https://github.com/kelsa-pi/UNO2Dash) - Generate UNO docset for Dash 
-
-[unostarter](https://github.com/kelsa-pi/unostarter) - PyUNO module which integrates frequently used methods in LibreOffice macro development 
 
 
 ## Installation and usage
