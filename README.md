@@ -40,5 +40,5 @@ For information see [documenation](https://github.com/kelsa-pi/PyUNO_Workspace/w
 BSD
 
 ## Status
-Alpha - no warranty whatsoever and use at your own risk.
+Beta - Reasonably feature-complete and stable enough to be usable for day-to-day work. No warranty whatsoever and use at your own risk.
 
