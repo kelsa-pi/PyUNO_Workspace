@@ -93,11 +93,13 @@ class Inspector:
                     # name
                     p_name = str(property.Name)
                     P[p_name] = {}
+                    # type
                     typ = str(property.Type)
                     typ = typ.split('(')
                     typ = typ[0].replace('<Type instance ', '')
                     typ = typ.replace('com.sun.star', '')
-                    P[p_name]['type'] = typ.strip() 
+                    P[p_name]['type'] = typ.strip()
+                    # repr
                     v = object.getPropertyValue(p_name)
                     t = str(v)
                     if t.startswith("pyuno object"):
@@ -130,9 +132,29 @@ class Inspector:
                 # name
                 m_name = str(method.Name)
                 M[m_name] = {}
+                # type
                 typ = str(method.getReturnType().getName())
                 typ = typ.replace('com.sun.star', '')
                 M[m_name]['type'] = typ
+                # name access
+                if m_name == 'getByName':
+                    all_items = []
+                    items = object.getElementNames()
+                    # escape bytes
+                    for item in items:
+                        all_items.append(str(item))
+                    M[m_name]['items'] = all_items
+                
+                # index access
+                if m_name == 'getByIndex':
+                    all_items = []
+                    items = object.getCount()
+                    # escape bytes
+                    for item in range(0, items):
+                        all_items.append(str(item))
+                    M[m_name]['items'] = all_items
+               
+                
                 # repr
                 args = method.ParameterTypes
                 infos = method.ParameterInfos
