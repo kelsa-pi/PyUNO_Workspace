@@ -40,6 +40,7 @@ WORKSPACE_DIR = os.path.dirname(WORKSPACE_PATH)
 RESULTFILE = 'result.txt'
 
 
+    
 def getWorkspaceMenu(help_browser):
     """ Set wokspace context menu. """
     workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search snippets']
@@ -352,6 +353,8 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # Clear first
         self.clear()
+        self.parent()._element_names.clear()
+        self.parent()._element_index.clear()
 
         # Set name
         line = self.parent()._line
@@ -367,10 +370,24 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 continue
 
             name = parts[0]
+            
+            # Methods
             if name[0].islower():
                 try:
                     parts[-1] = str(self._proxy._uno_dict[name]['repr'])
                     parts[1] = str(self._proxy._uno_dict[name]['type'])
+                    # fill combo box with element names
+                    if name == 'getByName':
+                        if self._proxy._uno_dict[name]:
+                            self.parent()._element_names.addItem('--Name--')
+                            self.parent()._element_names.addItems(self._proxy._uno_dict[name]['items'])
+                            
+                    if name == 'getByIndex':
+                        if self._proxy._uno_dict[name]:
+                            self.parent()._element_index.addItem('--Index--')
+                            self.parent()._element_index.addItems(self._proxy._uno_dict[name]['items'])
+                            
+                            
                 except:
                     pass
 
@@ -420,10 +437,22 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._config = pyzo.config.tools[toolId]
         if not hasattr(self._config, 'hideTypes'):
             self._config.hideTypes = []
-
-        # Create tool button
-        self._up = QtWidgets.QToolButton(self)
+            
+        # JSON serialization file
+        res = os.path.join(WORKSPACE_DIR, RESULTFILE)
+        if not os.path.isfile(res):
+            with open(res, 'w') as fl:
+                fl.write('{}')
+        
         style = QtWidgets.qApp.style()
+        # ----- Layout 1 -----
+        # Create Home tool button
+        self._home = QtWidgets.QToolButton(self)
+        self._home.setIcon(style.standardIcon(style.SP_ArrowUp))
+        self._home.setIconSize(QtCore.QSize(16, 16))
+        self._home.setToolTip("Home")
+        # Create Go back tool button
+        self._up = QtWidgets.QToolButton(self)
         self._up.setIcon(style.standardIcon(style.SP_ArrowLeft))
         self._up.setIconSize(QtCore.QSize(16, 16))
         self._up.setToolTip("Go back")
@@ -437,15 +466,19 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._insert_code.setIcon(style.standardIcon(style.SP_FileDialogDetailedView))
         self._insert_code.setToolTip("Insert code in the script at the cursor position")
         
+        # ----- Layout 2 -----
         # Create "argument_label" label
         self._argument_label = QtWidgets.QLabel(self)
-        self._argument_label.setText("Argument: ")
+        self._argument_label.setText("Arguments: ")
         # Create "argument_line" line edit
         self._argument_line = QtWidgets.QLineEdit(self)
         self._argument_line.setReadOnly(False)
         self.argument_tip = 'Add argument and duble clik on method.\nExamples:\n"NAME" = object.getByName("NAME"),\n 0 = object.getByIndex(0),\n [space] = object.getMethod( )'
         self._argument_line.setToolTip(self.argument_tip)
-        
+        # Create element_names combo box
+        self._element_names = QtWidgets.QComboBox(self)
+        # Create element_index combo box
+        self._element_index = QtWidgets.QComboBox(self)
         # Create options menu
         self._options = QtWidgets.QToolButton(self)
         self._options.setIcon(pyzo.icons.filter)
@@ -456,9 +489,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._options.setMenu(self._options._menu)
         self.onOptionsPress()  # create menu now
         
+        # ----- Layout 3 -----
         # Create tree
         self._tree = PyUNOWorkspaceTree(self)
         
+        # ----- Layout4 -----
         # General Option
         self._option_label = QtWidgets.QLabel(self)
         self._option_label.setText("Options: ")
@@ -472,40 +507,81 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         # Object and insert code layout
         layout_1 = QtWidgets.QHBoxLayout()
+        layout_1.addWidget(self._home, 0)
         layout_1.addWidget(self._up, 0)
         layout_1.addWidget(self._line, 1)
         layout_1.addWidget(self._insert_code, 0)
+        
         # Argument and option layout
         layout_2 = QtWidgets.QHBoxLayout()
         layout_2.addWidget(self._argument_label, 0)
-        layout_2.addWidget(self._argument_line, 0)
+        layout_2.addWidget(self._argument_line, 1)
+        layout_2.addWidget(self._element_index, 0)
+        layout_2.addWidget(self._element_names, 0)
         layout_2.addWidget(self._options, 0)
+        
         # Tree layout
         layout_3 = QtWidgets.QVBoxLayout()
         layout_3.addWidget(self._tree, 0)
         
         # Options layout
-        layout_6 = QtWidgets.QHBoxLayout()
-        layout_6.addWidget(self._option_label, 0)
-        layout_6.addWidget(self._dash, 0)
-        layout_6.addWidget(self._option_save, 0)
+        layout_4 = QtWidgets.QHBoxLayout()
+        layout_4.addWidget(self._option_label, 0)
+        layout_4.addWidget(self._dash, 0)
+        layout_4.addWidget(self._option_save, 0)
         
         # Set main layout
         mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.addLayout(layout_1, 0)
         mainLayout.addLayout(layout_2, 0)
         mainLayout.addLayout(layout_3, 0)
-        mainLayout.addLayout(layout_6, 0)
+        mainLayout.addLayout(layout_4, 0)
         mainLayout.setSpacing(2)
         mainLayout.setContentsMargins(4, 4, 4, 4)
         self.setLayout(mainLayout)
 
         # ------ Bind events
+        self._home.pressed.connect(self.onHomePress)
         self._up.pressed.connect(self._tree._proxy.goUp)
         self._insert_code.pressed.connect(self.onInsertCodeInEditor)
         self._options.pressed.connect(self.onOptionsPress)
         self._options._menu.triggered.connect(self.onOptionMenuTiggered)
         self._option_save.pressed.connect(self.onSaveOptionsInConf)
+        self._element_names.activated[str].connect(self.onElementNamesPress)
+        self._element_index.activated[str].connect(self.onElementIndexPress)
+    
+    # ---------------------------- 
+    #           EVENTS
+    # ----------------------------
+    
+    def onHomePress(self):
+        """ Back to start """
+        new_line = ''
+        
+        self._line.setText(new_line)
+        self._tree._proxy.setName(new_line)
+    
+    def onElementNamesPress(self):
+        """ Fill element names in combo box """
+        element = self._element_names.currentText()
+        if element == '--Name--':
+            pass
+        else:
+            old_line = self._line.text()
+            new_line = str(old_line + '.getByName("' + element + '")')
+            self._line.setText(new_line)
+            self._tree._proxy.setName(new_line)
+    
+    def onElementIndexPress(self):
+        """ Fill element index in combo box """
+        element = self._element_index.currentText()
+        if element == '--Index--':
+            pass
+        else:
+            old_line = self._line.text()
+            new_line = str(old_line + '.getByIndex(' + element + ')')
+            self._line.setText(new_line)
+            self._tree._proxy.setName(new_line)
 
     def onSaveOptionsInConf(self):
         """ Save options in configuration file. """
@@ -553,8 +629,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         return self.createCodeSnippet(data)
     
     def createCodeSnippet(self, data):
-        """
-        """
+        """ Create code snippet """
         target = 'initial_target'
         code = ''
         for index in range(0, len(data)):
