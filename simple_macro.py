@@ -39,7 +39,8 @@ if __name__ == "__main__":
     try:
         remote_ctx = resolver.resolve("uno:socket,"
                                       "host=localhost,"
-                                      "port=2002;"
+                                      "port=2002,"
+                                      "tcpNoDelay=1;"
                                       "urp;"
                                       "StarOffice.ComponentContext")
     except Exception as err:
