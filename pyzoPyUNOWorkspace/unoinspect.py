@@ -143,7 +143,7 @@ class Inspector:
                     # escape bytes
                     for item in items:
                         all_items.append(str(item))
-                    M[m_name]['items'] = all_items
+                    M[m_name]['items'] = sorted(all_items)
                 
                 # index access
                 if m_name == 'getByIndex':
