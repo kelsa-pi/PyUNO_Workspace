@@ -385,15 +385,21 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                     # fill combo box with element names
                     if name == 'getByName':
                         if self._proxy._uno_dict[name]:
-                            self.parent()._element_names.addItem('--Name--')
-                            self.parent()._element_names.addItems(self._proxy._uno_dict[name]['items'])
-                            self.parent()._element_names.setEnabled(True)
+                            if not self._proxy._uno_dict[name]['items']:
+                                pass
+                            else:
+                                self.parent()._element_names.addItem('--Name--')
+                                self.parent()._element_names.addItems(self._proxy._uno_dict[name]['items'])
+                                self.parent()._element_names.setEnabled(True)
                             
                     if name == 'getByIndex':
                         if self._proxy._uno_dict[name]:
-                            self.parent()._element_index.addItem('--Index--')
-                            self.parent()._element_index.addItems(self._proxy._uno_dict[name]['items'])
-                            self.parent()._element_index.setEnabled(True)
+                            if not self._proxy._uno_dict[name]['items']:
+                                pass
+                            else:
+                                self.parent()._element_index.addItem('--Index--')
+                                self.parent()._element_index.addItems(self._proxy._uno_dict[name]['items'])
+                                self.parent()._element_index.setEnabled(True)
 
                 except:
                     pass
