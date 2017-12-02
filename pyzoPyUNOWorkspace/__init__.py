@@ -280,7 +280,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """ contextMenuTriggered(action)
         Process a request from the context menu.
         """
-
+        
         # Get text
         req = action.text().lower()
         print(req)
@@ -326,6 +326,10 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """ onItemExpand(item)
         Inspect the attributes of that item.
         # """
+        
+        # ----------
+        
+        # ----------
 
         # argument line
         argument = self.parent()._argument_line.text()
@@ -355,6 +359,8 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.clear()
         self.parent()._element_names.clear()
         self.parent()._element_index.clear()
+        self.parent()._element_names.setEnabled(False)
+        self.parent()._element_index.setEnabled(False)
 
         # Set name
         line = self.parent()._line
@@ -381,13 +387,14 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                         if self._proxy._uno_dict[name]:
                             self.parent()._element_names.addItem('--Name--')
                             self.parent()._element_names.addItems(self._proxy._uno_dict[name]['items'])
+                            self.parent()._element_names.setEnabled(True)
                             
                     if name == 'getByIndex':
                         if self._proxy._uno_dict[name]:
                             self.parent()._element_index.addItem('--Index--')
                             self.parent()._element_index.addItems(self._proxy._uno_dict[name]['items'])
-                            
-                            
+                            self.parent()._element_index.setEnabled(True)
+
                 except:
                     pass
 
@@ -477,8 +484,10 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._argument_line.setToolTip(self.argument_tip)
         # Create element_names combo box
         self._element_names = QtWidgets.QComboBox(self)
+        self._element_names.setEnabled(False)
         # Create element_index combo box
         self._element_index = QtWidgets.QComboBox(self)
+        self._element_index.setEnabled(False)
         # Create options menu
         self._options = QtWidgets.QToolButton(self)
         self._options.setIcon(pyzo.icons.filter)
