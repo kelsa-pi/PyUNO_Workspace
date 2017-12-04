@@ -224,7 +224,7 @@ class Inspector:
         elif output == 'json':
             file_path = join(_DIR, filename)
             with open(file_path, 'w') as outfile:
-                dump(context, outfile)
+                dump(context, outfile, indent=4)
         
         # store result in pickle file
         elif output == 'pickle':
