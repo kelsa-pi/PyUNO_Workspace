@@ -67,19 +67,32 @@ def splitName(name):
     Split an object name in parts, taking dots and indexing into account.
     """
     name = name.replace('[', '.[')
-    # replace extra dots eg. ctx.getByName("/singletons/com.sun.star.beans.theIntrospection")
-    extra_dots = re.findall(r'"(.*?)"', name)
-    if extra_dots:
-        for part in extra_dots:
-            new = part.replace('.', '_')
-            new_name = name.replace(part, new)
+    parts = name.split('.')
+    return [p for p in parts if p]
         
-        parts = new_name.split('.')
+
+def splitNameDotCleaner(name):
+    """ splitNameDotCleaner(name)
+    Split an object name in parts, taking dots, quotes and indexing into account.
+    Object name with extra dots eg. ctx.getByName("/singletons/com.sun.star.beans.theIntrospection")
+    """
+    name = name.replace('[', '.[')
+    parts = name.split('.')
+    
+    if '"' in parts[-1]:
+        extra_dots = re.findall(r'"(.*?)"', name)
+        if extra_dots:
+            for part in extra_dots:
+                new = part.replace('.', '_')
+                new_name = name.replace(part, new)
+            
+            new_parts = new_name.split('.')
+            return [p for p in new_parts if p]
+        
+    else:
+
         return [p for p in parts if p]
     
-    else:
-        parts = name.split('.')
-        return [p for p in parts if p]
 
 
 def joinName(parts):
@@ -152,7 +165,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         """ goUp()
         Cut the last part off the name.
         """
-        parts = splitName(self._name)
+        parts = splitNameDotCleaner(self._name)
         if parts:
             parts.pop()
         self.setName(joinName(parts))
