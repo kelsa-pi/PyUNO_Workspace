@@ -67,8 +67,19 @@ def splitName(name):
     Split an object name in parts, taking dots and indexing into account.
     """
     name = name.replace('[', '.[')
-    parts = name.split('.')
-    return [p for p in parts if p]
+    # replace extra dots eg. ctx.getByName("/singletons/com.sun.star.beans.theIntrospection")
+    extra_dots = re.findall(r'"(.*?)"', name)
+    if extra_dots:
+        for part in extra_dots:
+            new = part.replace('.', '_')
+            new_name = name.replace(part, new)
+        
+        parts = new_name.split('.')
+        return [p for p in parts if p]
+    
+    else:
+        parts = name.split('.')
+        return [p for p in parts if p]
 
 
 def joinName(parts):
