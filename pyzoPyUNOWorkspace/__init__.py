@@ -214,7 +214,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         # via pyzo
         self._variables = response
         
-        # wia unoinspect - read json
+        # via unoinspect - read json
         myfile = os.path.join(WORKSPACE_DIR, RESULTFILE) 
         with open(myfile) as json_file:  
             self._uno_dict = load(json_file)
@@ -488,6 +488,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._home.setIcon(style.standardIcon(style.SP_ArrowUp))
         self._home.setIconSize(QtCore.QSize(16, 16))
         self._home.setToolTip("Home")
+        # Create Refresh tool button
+        self._refresh = QtWidgets.QToolButton(self)
+        self._refresh.setIcon(style.standardIcon(style.SP_BrowserReload))
+        self._refresh.setIconSize(QtCore.QSize(16, 16))
+        self._refresh.setToolTip("Refresh")
+        
         # Create Go back tool button
         self._up = QtWidgets.QToolButton(self)
         self._up.setIcon(style.standardIcon(style.SP_ArrowLeft))
@@ -547,6 +553,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # Object and insert code layout
         layout_1 = QtWidgets.QHBoxLayout()
         layout_1.addWidget(self._home, 0)
+        layout_1.addWidget(self._refresh, 0)
         layout_1.addWidget(self._up, 0)
         layout_1.addWidget(self._line, 1)
         layout_1.addWidget(self._insert_code, 0)
@@ -581,6 +588,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # ------ Bind events
         self._home.pressed.connect(self.onHomePress)
+        self._refresh.pressed.connect(self.onRefreshPress)
         self._up.pressed.connect(self._tree._proxy.goUp)
         self._insert_code.pressed.connect(self.onInsertCodeInEditor)
         self._options.pressed.connect(self.onOptionsPress)
@@ -599,6 +607,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         self._line.setText(new_line)
         self._tree._proxy.setName(new_line)
+        
+    def onRefreshPress(self):
+        """ Refresh """
+        line = self._line.text()
+        self._tree._proxy.setName(line)
     
     def onElementNamesPress(self):
         """ Fill element names in combo box """
