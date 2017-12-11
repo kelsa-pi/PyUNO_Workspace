@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
+# !/usr/bin/env python
 
 # unoinspect is object inspectors for LibreOffice
 # Copyright (C) 2017  Sasa Kelecevic
@@ -136,9 +136,10 @@ class Inspector:
                 typ = str(method.getReturnType().getName())
                 typ = typ.replace('com.sun.star', '')
                 M[m_name]['type'] = typ
+                
+                all_items = []
                 # name access
                 if m_name == 'getByName':
-                    all_items = []
                     items = object.getElementNames()
                     # escape bytes
                     for item in items:
@@ -146,15 +147,25 @@ class Inspector:
                     M[m_name]['items'] = sorted(all_items)
                 
                 # index access
-                if m_name == 'getByIndex':
-                    all_items = []
+                elif m_name == 'getByIndex':
                     items = object.getCount()
-                    # escape bytes
-                    for item in range(0, items):
-                        all_items.append(str(item))
-                    M[m_name]['items'] = all_items
-               
+                    M[m_name]['items'] = [str(item) for item in range(0, items)]
                 
+                # supported services
+                elif m_name == 'getSupportedServiceNames':
+                    items = object.getSupportedServiceNames()
+                    M[m_name]['items'] = sorted(items)
+                
+                # enumerate
+                elif m_name == 'createEnumeration':
+                    idx = len(list(object))
+                    all_items.append(str(idx))
+                    M[m_name]['items'] = all_items
+                
+                else:
+                    # pass
+                    M[m_name]['items'] = all_items
+
                 # repr
                 args = method.ParameterTypes
                 infos = method.ParameterInfos
@@ -257,5 +268,3 @@ class Inspector:
         :param object:
         """
         return self.documenter.showInterfaceDoc(object)
-
-
