@@ -12,6 +12,7 @@ PyUNO Workspace is a modified version of Pyzo's Workspace plugin, designed for P
 * inspect Python and PyUNO objects
 * display methods with arguments description
 * set arguments for methods to drill down
+* iterate over UNO enumerations
 * for examined objects
   * find code examples
   * find code snippets
