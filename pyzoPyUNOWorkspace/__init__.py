@@ -40,7 +40,6 @@ WORKSPACE_DIR = os.path.dirname(WORKSPACE_PATH)
 RESULTFILE = 'result.txt'
 
 
-    
 def getWorkspaceMenu(help_browser):
     """ Set wokspace context menu. """
     workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search snippets']
@@ -59,7 +58,7 @@ help_browser = getDocumentationBrowser()
 workspace_menu = getWorkspaceMenu(help_browser)
 
 # Frequently used arguments 
-drill = ['getByIndex', 'getByName', 'getCellByPosition', 'getCellRangeByPosition', 'getCellRangesByName', 'hasByName']
+drill = ['createEnumeration', 'getByIndex', 'getByName', 'getCellByPosition', 'getCellRangeByPosition', 'getCellRangesByName', 'hasByName']
 
 
 def splitName(name):
@@ -92,8 +91,6 @@ def splitNameDotCleaner(name):
     else:
 
         return [p for p in parts if p]
-    
-
 
 def joinName(parts):
     """ joinName(parts)
@@ -120,7 +117,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         # Variables
         self._variables = []
         self._uno_dict = {}
-
+        
         # Element to get more info of
         self._name = ''
 
@@ -160,7 +157,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
             # via pyzo
             future = shell._request.dir2(self._name)
             future.add_done_callback(self.processResponse)
-        
+            
     def goUp(self):
         """ goUp()
         Cut the last part off the name.
@@ -365,7 +362,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             if inspect_item.startswith('get'):
                 inspect_item = inspect_item + '()'
             
-            elif inspect_item in ['hasElements', 'isModified']:
+            elif inspect_item in ['hasElements', 'isModified', 'createEnumeration', 'nextElement']:
                 inspect_item = inspect_item + '()'
             
         # set item for inspection
@@ -383,6 +380,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.clear()
         self.parent()._element_names.clear()
         self.parent()._element_index.clear()
+        self.parent()._enumerate.setEnabled(False)
         self.parent()._element_names.setEnabled(False)
         self.parent()._element_index.setEnabled(False)
 
@@ -424,7 +422,13 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                                 self.parent()._element_index.addItem('--Index--')
                                 self.parent()._element_index.addItems(self._proxy._uno_dict[name]['items'])
                                 self.parent()._element_index.setEnabled(True)
-
+                    
+                    if name == 'createEnumeration':
+                        if self._proxy._uno_dict[name]:
+                            if not self._proxy._uno_dict[name]['items']:
+                                pass
+                            else:
+                                self.parent()._enumerate.setEnabled(True)
                 except:
                     pass
 
@@ -483,11 +487,13 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         style = QtWidgets.qApp.style()
         # ----- Layout 1 -----
+        
         # Create Home tool button
         self._home = QtWidgets.QToolButton(self)
         self._home.setIcon(style.standardIcon(style.SP_ArrowUp))
         self._home.setIconSize(QtCore.QSize(16, 16))
         self._home.setToolTip("Home")
+       
         # Create Refresh tool button
         self._refresh = QtWidgets.QToolButton(self)
         self._refresh.setIcon(style.standardIcon(style.SP_BrowserReload))
@@ -499,31 +505,45 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._up.setIcon(style.standardIcon(style.SP_ArrowLeft))
         self._up.setIconSize(QtCore.QSize(16, 16))
         self._up.setToolTip("Go back")
+        
         # Create "path" line edit
         self._line = QtWidgets.QLineEdit(self)
         self._line.setReadOnly(True)
         self._line.setStyleSheet("QLineEdit { background:#ddd; }")
         self._line.setFocusPolicy(QtCore.Qt.NoFocus)
+        
+        # Create enumerate tool button
+        self._enumerate = QtWidgets.QToolButton(self)
+        self._enumerate.setIcon(style.standardIcon(style.SP_ArrowDown))
+        self._enumerate.setIconSize(QtCore.QSize(16, 16))
+        self._enumerate.setToolTip("Enumerate")
+        self._enumerate.setEnabled(False)
+        
         # Create "insert_code" button
         self._insert_code = QtWidgets.QToolButton(self)
         self._insert_code.setIcon(style.standardIcon(style.SP_FileDialogDetailedView))
         self._insert_code.setToolTip("Insert code in the script at the cursor position")
         
         # ----- Layout 2 -----
+        
         # Create "argument_label" label
         self._argument_label = QtWidgets.QLabel(self)
         self._argument_label.setText("Arguments: ")
+        
         # Create "argument_line" line edit
         self._argument_line = QtWidgets.QLineEdit(self)
         self._argument_line.setReadOnly(False)
         self.argument_tip = 'Add argument and duble clik on method.\nExamples:\n"NAME" = object.getByName("NAME"),\n 0 = object.getByIndex(0),\n [space] = object.getMethod( )'
         self._argument_line.setToolTip(self.argument_tip)
+        
         # Create element_names combo box
         self._element_names = QtWidgets.QComboBox(self)
         self._element_names.setEnabled(False)
+        
         # Create element_index combo box
         self._element_index = QtWidgets.QComboBox(self)
         self._element_index.setEnabled(False)
+        
         # Create options menu
         self._options = QtWidgets.QToolButton(self)
         self._options.setIcon(pyzo.icons.filter)
@@ -556,6 +576,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_1.addWidget(self._refresh, 0)
         layout_1.addWidget(self._up, 0)
         layout_1.addWidget(self._line, 1)
+        layout_1.addWidget(self._enumerate, 0)
         layout_1.addWidget(self._insert_code, 0)
         
         # Argument and option layout
@@ -596,6 +617,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._option_save.pressed.connect(self.onSaveOptionsInConf)
         self._element_names.activated[str].connect(self.onElementNamesPress)
         self._element_index.activated[str].connect(self.onElementIndexPress)
+        self._enumerate.pressed.connect(self.onEnumeratePress)
     
     # ---------------------------- 
     #           EVENTS
@@ -604,7 +626,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
     def onHomePress(self):
         """ Back to start """
         new_line = ''
-        
         self._line.setText(new_line)
         self._tree._proxy.setName(new_line)
         
@@ -612,7 +633,13 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         """ Refresh """
         line = self._line.text()
         self._tree._proxy.setName(line)
-    
+        
+    def onEnumeratePress(self):
+        line = self._line.text()
+        new_line = "list(" + line + ")"
+        print(new_line)   
+        self._tree._proxy.setName(new_line)
+
     def onElementNamesPress(self):
         """ Fill element names in combo box """
         element = self._element_names.currentText()
