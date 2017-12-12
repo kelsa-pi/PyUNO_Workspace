@@ -398,9 +398,11 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 continue
 
             name = parts[0]
+            if name == 'ImplementationName':
+                self.parent()._impl_name.setText(str(parts[3]))
             
             # Methods
-            if name[0].islower():
+            if name[0].islower() or name == 'HasExecutableCode':
                 try:
                     parts[-1] = str(self._proxy._uno_dict[name]['repr'])
                     parts[1] = str(self._proxy._uno_dict[name]['type'])
@@ -457,6 +459,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             item.setToolTip(1, tt)
             item.setToolTip(2, tt)
         
+        self.parent()._all.setChecked(True)
         self._proxy._uno_dic = {}
 
 
@@ -526,9 +529,22 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         # ----- Layout 2 -----
         
+        # Create radio box All
+        self._all = QtWidgets.QRadioButton(self)
+        self._all.setText("Aa")
+        self._all.setChecked(True)
+        
+        # Create radio box Properties
+        self._only_p = QtWidgets.QRadioButton(self)
+        self._only_p.setText("A")
+        
+        # Create radio box Methods
+        self._only_m = QtWidgets.QRadioButton(self)
+        self._only_m.setText("a")
+        
         # Create "argument_label" label
         self._argument_label = QtWidgets.QLabel(self)
-        self._argument_label.setText("Arguments: ")
+        self._argument_label.setText("  Arguments: ")
         
         # Create "argument_line" line edit
         self._argument_line = QtWidgets.QLineEdit(self)
@@ -559,9 +575,17 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._tree = PyUNOWorkspaceTree(self)
         
         # ----- Layout4 -----
+        
+        # Create "impl_name" line edit
+        self._impl_name = QtWidgets.QLineEdit(self)
+        self._impl_name.setReadOnly(True)
+        self._impl_name.setToolTip("Implementation name")
+        self._impl_name.setStyleSheet("QLineEdit { background:#e5e4e2; }")
+        self._impl_name.setFocusPolicy(QtCore.Qt.NoFocus)
+        
         # General Option
         self._option_label = QtWidgets.QLabel(self)
-        self._option_label.setText("Options: ")
+        self._option_label.setText(" Options: ")
         self._dash = QtWidgets.QCheckBox(self)
         self._dash.setText('Dash')
         self._dash.setCheckState(conf_dash)
@@ -581,8 +605,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         # Argument and option layout
         layout_2 = QtWidgets.QHBoxLayout()
+        layout_2.addWidget(self._all, 0)
+        layout_2.addWidget(self._only_p, 0)
+        layout_2.addWidget(self._only_m, 0)
         layout_2.addWidget(self._argument_label, 0)
-        layout_2.addWidget(self._argument_line, 1)
+        layout_2.addWidget(self._argument_line, 0)
         layout_2.addWidget(self._element_index, 0)
         layout_2.addWidget(self._element_names, 0)
         layout_2.addWidget(self._options, 0)
@@ -593,6 +620,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         # Options layout
         layout_4 = QtWidgets.QHBoxLayout()
+        layout_4.addWidget(self._impl_name, 0)
         layout_4.addWidget(self._option_label, 0)
         layout_4.addWidget(self._dash, 0)
         layout_4.addWidget(self._option_save, 0)
@@ -618,11 +646,52 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._element_names.activated[str].connect(self.onElementNamesPress)
         self._element_index.activated[str].connect(self.onElementIndexPress)
         self._enumerate.pressed.connect(self.onEnumeratePress)
+        
+        self._all.toggled.connect(lambda:self.onRadioChangeState(self._all))
+        self._only_p.toggled.connect(lambda:self.onRadioChangeState(self._only_p))
+        self._only_m.toggled.connect(lambda:self.onRadioChangeState(self._only_m))
     
     # ---------------------------- 
     #           EVENTS
     # ----------------------------
     
+    def onRadioChangeState(self, radiobox):
+        
+        
+        if radiobox.text() == "Aa":
+            if radiobox.isChecked() == True:
+                root = self._tree.invisibleRootItem()
+                child_count = root.childCount()
+                for i in range(child_count):
+                    item = root.child(i)
+                    name = item.text(0)
+                    if name[0].isupper() or name[0].islower():
+                        self._tree.setRowHidden(i, QtCore.QModelIndex(),False)
+        
+        if radiobox.text() == "A":
+            if radiobox.isChecked() == True:
+                root = self._tree.invisibleRootItem()
+                child_count = root.childCount()
+                for i in range(child_count):
+                    item = root.child(i)
+                    name = item.text(0)
+                    if name[0].islower():
+                        self._tree.setRowHidden(i, QtCore.QModelIndex(),True)
+                    else:
+                        self._tree.setRowHidden(i, QtCore.QModelIndex(),False)
+                        
+        if radiobox.text() == "a":
+            if radiobox.isChecked() == True:
+                root = self._tree.invisibleRootItem()
+                child_count = root.childCount()
+                for i in range(child_count):
+                    item = root.child(i)
+                    name = item.text(0)
+                    if name[0].isupper():
+                        self._tree.setRowHidden(i, QtCore.QModelIndex(),True)
+                    else:
+                        self._tree.setRowHidden(i, QtCore.QModelIndex(),False)
+                
     def onHomePress(self):
         """ Back to start """
         new_line = ''
