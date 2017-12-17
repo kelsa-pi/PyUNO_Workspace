@@ -31,7 +31,7 @@ if __name__ == "__main__":
     """ Connect to LibreOffice proccess.
     
     Start the office in shell with command:
-    soffice "--accept=socket,host=localhost,port=2002;urp;StarOffice.ComponentContext" --norestore
+    soffice "--accept=socket,host=localhost,port=2002,tcpNoDelay=1;urp;StarOffice.ComponentContext" --norestore
     """
     
     local_ctx= uno.getComponentContext()
