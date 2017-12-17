@@ -13,11 +13,9 @@ import os
 import re
 from json import load
 from inspect import getsourcefile
-
 import subprocess
 import threading
 import webbrowser
-
 import pyzo
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
 from .helper import configStringToInt, getDocumentationBrowser
@@ -38,6 +36,10 @@ conf_dash = configStringToInt(config.get('GENERAL', 'dash'))
 WORKSPACE_PATH = os.path.abspath(getsourcefile(lambda: 0))
 WORKSPACE_DIR = os.path.dirname(WORKSPACE_PATH)
 RESULTFILE = 'result.txt'
+
+json_file = os.path.join(WORKSPACE_DIR, RESULTFILE) 
+with open(json_file, 'w') as jfile:  
+    jfile.write('{}')
 
 
 def getWorkspaceMenu(help_browser):
@@ -70,14 +72,16 @@ def splitName(name):
     return [p for p in parts if p]
         
 
-def splitNameDotCleaner(name):
-    """ splitNameDotCleaner(name)
-    Split an object name in parts, taking dots, quotes and indexing into account.
-    Object name with extra dots eg. ctx.getByName("/singletons/com.sun.star.beans.theIntrospection")
+def splitNameCleaner(name):
+    """ splitNameCleaner(name)
+    Split an object name in parts, taking dots, quotes, indexing etc. into account.
+    Object name with extra dots eg. ctx.getByName("/singletons/com.sun.star.beans.theIntrospection"),
+    enumerated objects eg. list(document.Text)
     """
     name = name.replace('[', '.[')
     parts = name.split('.')
-    
+
+    # Fix extra dots
     if '"' in parts[-1]:
         extra_dots = re.findall(r'"(.*?)"', name)
         if extra_dots:
@@ -86,16 +90,26 @@ def splitNameDotCleaner(name):
                 new_name = name.replace(part, new)
             
             new_parts = new_name.split('.')
-            return [p for p in new_parts if p]
+            np = [p for p in new_parts if p]
         
     else:
 
-        return [p for p in parts if p]
+        np = [p for p in parts if p]
+
+    # Fix list
+    if np[0].startswith('list(') and np[-1].endswith(')'):
+        np[0] = np[0].replace('list(', '')
+        np[-1] = np[-1][:-1]
+        np.append(np[-1])
+    
+    return np
+
 
 def joinName(parts):
     """ joinName(parts)
     Join the parts of an object name, taking dots and indexing into account.
     """
+
     name = '.'.join(parts)
     return name.replace('.[', '[')
 
@@ -133,7 +147,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
 
         # Initialize
         self.onCurrentShellStateChanged()
-
+    
     def addNamePart(self, part):
         """ addNamePart(part)
         Add a part to the name.
@@ -141,11 +155,12 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         parts = splitName(self._name)
         parts.append(part)
         self.setName(joinName(parts))
-
+        
     def setName(self, name):
         """ setName(name)
         Set the name that we want to know more of.
         """
+
         self._name = name
         shell = pyzo.shells.getCurrentShell()
         if shell:
@@ -162,7 +177,8 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         """ goUp()
         Cut the last part off the name.
         """
-        parts = splitNameDotCleaner(self._name)
+        parts = splitNameCleaner(self._name)
+       
         if parts:
             parts.pop()
         self.setName(joinName(parts))
@@ -304,7 +320,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         
         # Get text
         req = action.text().lower()
-        print(req)
         # Get current shell
         shell = pyzo.shells.getCurrentShell()
 
@@ -322,7 +337,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             if hw:
                 hw.setObjectName(action._objectName)
 
-        # PyUNO
+        # ------- PyUNO ----------------
         elif help_browser.lower() in req:
             # Search in Dash-like offline browser
             t = threading.Thread(None, subprocess.call([help_browser.lower(), search]))
@@ -346,11 +361,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
     def onItemExpand(self, item):
         """ onItemExpand(item)
         Inspect the attributes of that item.
-        # """
-        
-        # ----------
-        
-        # ----------
+        """
 
         # argument line
         argument = self.parent()._argument_line.text()
@@ -370,6 +381,44 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # clear argument line
         self.parent()._argument_line.clear()
+        
+    def resetWidget(self):
+        """ resetWidget
+        Reset widgets to default.
+        """
+        self.parent()._element_names.clear()
+        self.parent()._element_index.clear()
+        self.parent()._enumerate.setEnabled(False)
+        self.parent()._element_names.setEnabled(False)
+        self.parent()._element_index.setEnabled(False)
+    
+    def fillWidget(self):
+        """ fillWidget
+        Fill/activate widgets.
+        """
+        
+        try:
+            if self._proxy._uno_dict['getByName']['items']:
+                self.parent()._element_names.addItem('--Name--')
+                self.parent()._element_names.addItems(self._proxy._uno_dict['getByName']['items'])
+                self.parent()._element_names.setEnabled(True)
+        except:
+            pass
+            
+        try:
+            
+            if self._proxy._uno_dict['getByIndex']['items']:
+                self.parent()._element_index.addItem('--Index--')
+                self.parent()._element_index.addItems(self._proxy._uno_dict['getByIndex']['items'])
+                self.parent()._element_index.setEnabled(True)
+        except:
+            pass
+            
+        try:
+            if self._proxy._uno_dict['createEnumeration']['items']:
+                self.parent()._enumerate.setEnabled(True)
+        except:
+            pass
 
     def fillWorkspace(self):
         """ fillWorkspace()
@@ -378,15 +427,15 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # Clear first
         self.clear()
-        self.parent()._element_names.clear()
-        self.parent()._element_index.clear()
-        self.parent()._enumerate.setEnabled(False)
-        self.parent()._element_names.setEnabled(False)
-        self.parent()._element_index.setEnabled(False)
+        self.resetWidget()
 
         # Set name
         line = self.parent()._line
         line.setText(self._proxy._name)
+
+        # Fill widgets
+        self.parent().onAddToHistory(line.text())
+        self.fillWidget()
         
         # Add elements
         for des in self._proxy._variables:
@@ -398,39 +447,17 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 continue
 
             name = parts[0]
+
+            # Implementation name
             if name == 'ImplementationName':
-                self.parent()._impl_name.setText(str(parts[3]))
+                impl_name = parts[3].replace('com.sun.star', '~')
+                self.parent()._impl_name.setText(impl_name )
             
             # Methods
             if name[0].islower() or name == 'HasExecutableCode':
                 try:
                     parts[-1] = str(self._proxy._uno_dict[name]['repr'])
                     parts[1] = str(self._proxy._uno_dict[name]['type'])
-                    # fill combo box with element names
-                    if name == 'getByName':
-                        if self._proxy._uno_dict[name]:
-                            if not self._proxy._uno_dict[name]['items']:
-                                pass
-                            else:
-                                self.parent()._element_names.addItem('--Name--')
-                                self.parent()._element_names.addItems(self._proxy._uno_dict[name]['items'])
-                                self.parent()._element_names.setEnabled(True)
-                            
-                    if name == 'getByIndex':
-                        if self._proxy._uno_dict[name]:
-                            if not self._proxy._uno_dict[name]['items']:
-                                pass
-                            else:
-                                self.parent()._element_index.addItem('--Index--')
-                                self.parent()._element_index.addItems(self._proxy._uno_dict[name]['items'])
-                                self.parent()._element_index.setEnabled(True)
-                    
-                    if name == 'createEnumeration':
-                        if self._proxy._uno_dict[name]:
-                            if not self._proxy._uno_dict[name]['items']:
-                                pass
-                            else:
-                                self.parent()._enumerate.setEnabled(True)
                 except:
                     pass
 
@@ -458,8 +485,10 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             item.setToolTip(0, tt)
             item.setToolTip(1, tt)
             item.setToolTip(2, tt)
-        
+
         self.parent()._all.setChecked(True)
+
+        # Clear UNO dict
         self._proxy._uno_dic = {}
 
 
@@ -533,32 +562,32 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._all = QtWidgets.QRadioButton(self)
         self._all.setText("Aa")
         self._all.setChecked(True)
+        self._all.setToolTip("All")
         
         # Create radio box Properties
         self._only_p = QtWidgets.QRadioButton(self)
         self._only_p.setText("A")
+        self._only_p.setToolTip("Uppercase")
         
         # Create radio box Methods
         self._only_m = QtWidgets.QRadioButton(self)
         self._only_m.setText("a")
-        
-        # Create "argument_label" label
-        self._argument_label = QtWidgets.QLabel(self)
-        self._argument_label.setText("  Arguments: ")
-        
-        # Create "argument_line" line edit
-        self._argument_line = QtWidgets.QLineEdit(self)
-        self._argument_line.setReadOnly(False)
-        self.argument_tip = 'Add argument and duble clik on method.\nExamples:\n"NAME" = object.getByName("NAME"),\n 0 = object.getByIndex(0),\n [space] = object.getMethod( )'
-        self._argument_line.setToolTip(self.argument_tip)
-        
-        # Create element_names combo box
-        self._element_names = QtWidgets.QComboBox(self)
-        self._element_names.setEnabled(False)
+        self._only_m.setToolTip("Lowercase")
         
         # Create element_index combo box
         self._element_index = QtWidgets.QComboBox(self)
+        self._element_index.setToolTip("Get by index")
         self._element_index.setEnabled(False)
+        
+        # Create element_names combo box
+        self._element_names = QtWidgets.QComboBox(self)
+        self._element_names.setToolTip("Get by name")
+        self._element_names.setEnabled(False)
+
+        # Create history combo box
+        self._history = QtWidgets.QComboBox(self)
+        self._history.setToolTip("History")
+        self._history.setEnabled(True)
         
         # Create options menu
         self._options = QtWidgets.QToolButton(self)
@@ -576,21 +605,37 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         # ----- Layout4 -----
         
-        # Create "impl_name" line edit
-        self._impl_name = QtWidgets.QLineEdit(self)
-        self._impl_name.setReadOnly(True)
-        self._impl_name.setToolTip("Implementation name")
-        self._impl_name.setStyleSheet("QLineEdit { background:#e5e4e2; }")
-        self._impl_name.setFocusPolicy(QtCore.Qt.NoFocus)
+        # Create "argument_label" label
+        self._argument_label = QtWidgets.QLabel(self)
+        self._argument_label.setText("  Arguments: ")
         
+        # Create "argument_line" line edit
+        self._argument_line = QtWidgets.QLineEdit(self)
+        self._argument_line.setReadOnly(False)
+        self.argument_tip = 'Add argument and duble clik on method.\nExamples:\n"NAME" = object.getByName("NAME"),\n 0 = object.getByIndex(0),\n [space] = object.getMethod( )'
+        self._argument_line.setToolTip(self.argument_tip)
+        
+        # Create "info_label" label
+        self._info_label = QtWidgets.QLabel(self)
+        self._info_label.setText("")
+        
+        # Create "impl_name" line edit
+        self._impl_name = QtWidgets.QLabel(self)
+        self._impl_name.setToolTip("Implementation name")
+        self._impl_name.setStyleSheet("QLabel { background:#ddd; }")
+
         # General Option
         self._option_label = QtWidgets.QLabel(self)
         self._option_label.setText(" Options: ")
+        #
         self._dash = QtWidgets.QCheckBox(self)
         self._dash.setText('Dash')
+        self._dash.setToolTip("Use Dash as document browser")
         self._dash.setCheckState(conf_dash)
+        #
         self._option_save = QtWidgets.QToolButton(self)
-        self._option_save.setText('Save')
+        self._option_save.setText("Save")
+        self._option_save.setToolTip("Save all options")
         
         # ------ Set layouts
         
@@ -608,19 +653,21 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_2.addWidget(self._all, 0)
         layout_2.addWidget(self._only_p, 0)
         layout_2.addWidget(self._only_m, 0)
-        layout_2.addWidget(self._argument_label, 0)
-        layout_2.addWidget(self._argument_line, 0)
         layout_2.addWidget(self._element_index, 0)
         layout_2.addWidget(self._element_names, 0)
+        layout_2.addWidget(self._history, 1)
         layout_2.addWidget(self._options, 0)
-        
+
         # Tree layout
         layout_3 = QtWidgets.QVBoxLayout()
         layout_3.addWidget(self._tree, 0)
         
         # Options layout
         layout_4 = QtWidgets.QHBoxLayout()
-        layout_4.addWidget(self._impl_name, 0)
+        layout_4.addWidget(self._argument_label, 0)
+        layout_4.addWidget(self._argument_line, 1)
+        layout_4.addWidget(self._info_label, 0)
+        layout_4.addWidget(self._impl_name, 1)
         layout_4.addWidget(self._option_label, 0)
         layout_4.addWidget(self._dash, 0)
         layout_4.addWidget(self._option_save, 0)
@@ -636,62 +683,28 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self.setLayout(mainLayout)
 
         # ------ Bind events
+
         self._home.pressed.connect(self.onHomePress)
         self._refresh.pressed.connect(self.onRefreshPress)
         self._up.pressed.connect(self._tree._proxy.goUp)
-        self._insert_code.pressed.connect(self.onInsertCodeInEditor)
-        self._options.pressed.connect(self.onOptionsPress)
-        self._options._menu.triggered.connect(self.onOptionMenuTiggered)
-        self._option_save.pressed.connect(self.onSaveOptionsInConf)
-        self._element_names.activated[str].connect(self.onElementNamesPress)
-        self._element_index.activated[str].connect(self.onElementIndexPress)
         self._enumerate.pressed.connect(self.onEnumeratePress)
-        
+        self._insert_code.pressed.connect(self.onInsertCodeInEditor)
+        #
         self._all.toggled.connect(lambda:self.onRadioChangeState(self._all))
         self._only_p.toggled.connect(lambda:self.onRadioChangeState(self._only_p))
         self._only_m.toggled.connect(lambda:self.onRadioChangeState(self._only_m))
-    
+        self._element_names.activated[str].connect(self.onElementNamesPress)
+        self._element_index.activated[str].connect(self.onElementIndexPress)
+        self._history.activated[str].connect(self.onBackToHistory)
+        self._options.pressed.connect(self.onOptionsPress)
+        self._options._menu.triggered.connect(self.onOptionMenuTiggered)
+        #
+        self._option_save.pressed.connect(self.onSaveOptionsInConf)
+
     # ---------------------------- 
     #           EVENTS
     # ----------------------------
-    
-    def onRadioChangeState(self, radiobox):
-        
-        
-        if radiobox.text() == "Aa":
-            if radiobox.isChecked() == True:
-                root = self._tree.invisibleRootItem()
-                child_count = root.childCount()
-                for i in range(child_count):
-                    item = root.child(i)
-                    name = item.text(0)
-                    if name[0].isupper() or name[0].islower():
-                        self._tree.setRowHidden(i, QtCore.QModelIndex(),False)
-        
-        if radiobox.text() == "A":
-            if radiobox.isChecked() == True:
-                root = self._tree.invisibleRootItem()
-                child_count = root.childCount()
-                for i in range(child_count):
-                    item = root.child(i)
-                    name = item.text(0)
-                    if name[0].islower():
-                        self._tree.setRowHidden(i, QtCore.QModelIndex(),True)
-                    else:
-                        self._tree.setRowHidden(i, QtCore.QModelIndex(),False)
-                        
-        if radiobox.text() == "a":
-            if radiobox.isChecked() == True:
-                root = self._tree.invisibleRootItem()
-                child_count = root.childCount()
-                for i in range(child_count):
-                    item = root.child(i)
-                    name = item.text(0)
-                    if name[0].isupper():
-                        self._tree.setRowHidden(i, QtCore.QModelIndex(),True)
-                    else:
-                        self._tree.setRowHidden(i, QtCore.QModelIndex(),False)
-                
+
     def onHomePress(self):
         """ Back to start """
         new_line = ''
@@ -700,75 +713,10 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
     def onRefreshPress(self):
         """ Refresh """
+        item = self._tree.currentItem()
         line = self._line.text()
         self._tree._proxy.setName(line)
-        
-    def onEnumeratePress(self):
-        line = self._line.text()
-        new_line = "list(" + line + ")"
-        print(new_line)   
-        self._tree._proxy.setName(new_line)
-
-    def onElementNamesPress(self):
-        """ Fill element names in combo box """
-        element = self._element_names.currentText()
-        if element == '--Name--':
-            pass
-        else:
-            old_line = self._line.text()
-            new_line = str(old_line + '.getByName("' + element + '")')
-            self._line.setText(new_line)
-            self._tree._proxy.setName(new_line)
     
-    def onElementIndexPress(self):
-        """ Fill element index in combo box """
-        element = self._element_index.currentText()
-        if element == '--Index--':
-            pass
-        else:
-            old_line = self._line.text()
-            new_line = str(old_line + '.getByIndex(' + element + ')')
-            self._line.setText(new_line)
-            self._tree._proxy.setName(new_line)
-
-    def onSaveOptionsInConf(self):
-        """ Save options in configuration file. """
-        
-        config.set('GENERAL', 'dash', str(self._dash.isChecked()))
-  
-        with open(conf_file, 'w') as configfile:
-            config.write(configfile)
-
-    def onOptionsPress(self):
-        """ Create the menu for the button, Do each time to make sure
-        the checks are right. """
-
-        # Get menu
-        menu = self._options._menu
-        menu.clear()
-
-        for type in ['type', 'function', 'module', 'private']:
-            checked = type in self._config.hideTypes
-            action = menu.addAction('Hide %s' % type)
-            action.setCheckable(True)
-            action.setChecked(checked)
-
-    def onOptionMenuTiggered(self, action):
-        """  The user decides what to hide in the workspace. """
-
-        # What to show
-        type = action.text().split(' ', 1)[1]
-
-        # Swap
-        if type in self._config.hideTypes:
-            while type in self._config.hideTypes:
-                self._config.hideTypes.remove(type)
-        else:
-            self._config.hideTypes.append(type)
-
-        # Update
-        self._tree.fillWorkspace()
-
     def getCodeSnippet(self):
         """
         """
@@ -807,4 +755,117 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         code = self.getCodeSnippet()
         editor = pyzo.editors.getCurrentEditor()
-        editor.insertPlainText(code)
+        editor.insertPlainText(code)    
+
+    #
+    def onRadioChangeState(self, radiobox):
+        """ Filter tree
+        Show All, Uppercase or Lowercase elements
+        """
+        
+        root = self._tree.invisibleRootItem()
+        child_count = root.childCount()
+        for i in range(child_count):
+            item = root.child(i)
+            name = item.text(0)
+            # All
+            if radiobox.text() == "Aa" and radiobox.isChecked() is True:
+                if name[0].isupper() or name[0].islower():
+                    self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
+            # Uppercase
+            if radiobox.text() == "A" and radiobox.isChecked() is True:
+                if name[0].islower():
+                    self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
+                else:
+                    self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
+            # Lowercase
+            if radiobox.text() == "a" and radiobox.isChecked() is True:
+                if name[0].isupper():
+                    self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
+                else:
+                    self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
+        
+    def onEnumeratePress(self):
+        """ Create enumeration """
+        line = self._line.text()
+        new_line = "list(" + line + ")"
+        self._tree._proxy.setName(new_line)
+
+    def onElementNamesPress(self):
+        """ Fill element names in combo box """
+        element = self._element_names.currentText()
+        if element == '--Name--':
+            pass
+        else:
+            old_line = self._line.text()
+            new_line = str(old_line + '.getByName("' + element + '")')
+            self._line.setText(new_line)
+            self._tree._proxy.setName(new_line)
+    
+    def onElementIndexPress(self):
+        """ Fill element index in combo box """
+        element = self._element_index.currentText()
+        if element == '--Index--':
+            pass
+        else:
+            old_line = self._line.text()
+            new_line = str(old_line + '.getByIndex(' + element + ')')
+            self._line.setText(new_line)
+            self._tree._proxy.setName(new_line)
+            
+    def onBackToHistory(self):
+        """ Back to history """
+        new_line = self._history.currentText()
+        self._line.setText(new_line)
+        self._tree._proxy.setName(new_line)
+        
+    def onAddToHistory(self, data):
+        """ Record history """
+        old_list = [self._history.itemText(i) for i in range(self._history.count())]
+        # add new to list
+        if not data in old_list:
+            old_list.append(data)
+        # sort
+        new_list = sorted(old_list)
+        self._history.clear()
+        # show
+        self._history.addItems(new_list)
+
+    def onOptionsPress(self):
+        """ Create the menu for the button, Do each time to make sure
+        the checks are right. """
+
+        # Get menu
+        menu = self._options._menu
+        menu.clear()
+
+        for type in ['type', 'function', 'module', 'private']:
+            checked = type in self._config.hideTypes
+            action = menu.addAction('Hide %s' % type)
+            action.setCheckable(True)
+            action.setChecked(checked)
+    
+    def onOptionMenuTiggered(self, action):
+        """  The user decides what to hide in the workspace. """
+
+        # What to show
+        type = action.text().split(' ', 1)[1]
+
+        # Swap
+        if type in self._config.hideTypes:
+            while type in self._config.hideTypes:
+                self._config.hideTypes.remove(type)
+        else:
+            self._config.hideTypes.append(type)
+
+        # Update
+        self._tree.fillWorkspace()
+    
+    def onSaveOptionsInConf(self):
+        """ Save options in configuration file. """
+        
+        config.set('GENERAL', 'dash', str(self._dash.isChecked()))
+  
+        with open(conf_file, 'w') as configfile:
+            config.write(configfile)
+

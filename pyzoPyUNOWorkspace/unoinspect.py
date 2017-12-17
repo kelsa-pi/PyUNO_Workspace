@@ -21,6 +21,7 @@
 import uno
 from json import dump
 import pickle
+import sys
 from com.sun.star.beans.MethodConcept import \
     ALL as _METHOD_CONCEPT_ALL
 from com.sun.star.beans.PropertyConcept import \
@@ -191,7 +192,8 @@ class Inspector:
 
         :param object: Inspect this object
         :param item: List of properties and methods to inspect, optional
-        :param output: 'console': display result in terminal
+        :param output: 'stdout': display result in sys.stdout
+                       'console': display result in terminal
                        'dict': return dict
                        'json': store result in json file, default
                        'pickle': store result in pickle file
@@ -218,6 +220,10 @@ class Inspector:
             for k, v in m.items():
                 if k in item:
                     context[k] = v
+        
+        # write result in sys.stdout
+        if output == 'stdout':
+            sys.stdout.write(str(context) + '\n')
         
         # display result in terminal
         if output == 'console':
@@ -268,3 +274,4 @@ class Inspector:
         :param object:
         """
         return self.documenter.showInterfaceDoc(object)
+
