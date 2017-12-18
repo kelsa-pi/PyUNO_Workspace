@@ -85,36 +85,34 @@ class Inspector:
         """
 
         P = {}
-        try:
-            inspector = self.introspection.inspect(object)
-            # properties
-            properties = inspector.getProperties(_PROPERTY_CONCEPT_ALL)
-            for property in properties:
-                try:
-                    # name
-                    p_name = str(property.Name)
-                    P[p_name] = {}
-                    # type
-                    typ = str(property.Type)
-                    typ = typ.split('(')
-                    typ = typ[0].replace('<Type instance ', '')
-                    typ = typ.replace('com.sun.star', '')
-                    P[p_name]['type'] = typ.strip()
-                    # repr
-                    v = object.getPropertyValue(p_name)
-                    t = str(v)
-                    if t.startswith("pyuno object"):
-                        v = "()"
-                    if t.startswith("("):
-                        v = "()"
-                    
-                    P[p_name]['repr'] = str(v)
-                except:
-
-                    P[p_name]['repr'] = "()"
-
-        except:
-            pass
+        inspector = self.introspection.inspect(object)
+        
+        # properties
+        properties = inspector.getProperties(_PROPERTY_CONCEPT_ALL)
+        for property in properties:
+            try:
+                # name
+                p_name = str(property.Name)
+                P[p_name] = {}
+                # type
+                typ = str(property.Type)
+                typ = typ.split('(')
+                typ = typ[0].replace('<Type instance ', '')
+                typ = typ.replace('com.sun.star', '')
+                P[p_name]['type'] = typ.strip()
+                # repr
+                v = object.getPropertyValue(p_name)
+                t = str(v)
+                if t.startswith("pyuno object"):
+                    v = "()"
+                if t.startswith("("):
+                    v = "()"
+                
+                P[p_name]['repr'] = str(v)
+            
+            except Exception as err:
+                P[p_name]['type'] = 'ERROR'
+                P[p_name]['repr'] = str(err)
 
         return P
 
@@ -124,14 +122,17 @@ class Inspector:
         :param object: Inspect this object
 
         """
+
         M = {}
-        try:
-            inspector = self.introspection.inspect(object)
-            # methods
-            methods = inspector.getMethods(_METHOD_CONCEPT_ALL)
-            for method in methods:
-                # name
-                m_name = str(method.Name)
+        inspector = self.introspection.inspect(object)
+        
+        # methods
+        methods = inspector.getMethods(_METHOD_CONCEPT_ALL)
+        for method in methods:
+            
+            # name
+            m_name = str(method.Name)
+            try:    
                 M[m_name] = {}
                 # type
                 typ = str(method.getReturnType().getName())
@@ -166,7 +167,7 @@ class Inspector:
                 else:
                     # pass
                     M[m_name]['items'] = all_items
-
+    
                 # repr
                 args = method.ParameterTypes
                 infos = method.ParameterInfos
@@ -180,11 +181,13 @@ class Inspector:
                 
                 if params == "()":
                     params = "()"
-
+    
                 M[m_name]['repr'] = str(params)
-        except:
-            pass
-        
+            
+            except Exception as err:
+                M[m_name]['type'] = 'ERROR'
+                M[m_name]['repr'] = str(err)
+                
         return M
 
     def inspect(self, object, item=None, output='json', dir=_DIR, filename=_RESULTFILE):
