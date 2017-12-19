@@ -5,7 +5,7 @@
 </p>
 
 
-PyUNO Workspace is a modified version of Pyzo IDE Workspace plugin, designed for Python and PyUNO introspection. The plugin builds upon Pyzo's tried and tested interactive and introspection capabilities by making them UNO-aware. This allows the developers to inspect arbitrary UNO objects in the same manner as the regular Python objects, as well as providing easy access to UNO API documentation. The final goal is to make the LibreOffice script development a seamless experience for newcomers.  
+PyUNO Workspace is a modified version of Pyzo IDE Workspace plugin, designed for Python and PyUNO introspection. The plugin builds upon Pyzo's tried and tested interactive and introspection capabilities by making them UNO aware. This allows the developers to inspect arbitrary UNO objects in the same manner as the regular Python objects, as well as providing easy access to UNO API documentation. The final goal is to make the LibreOffice script development a seamless experience for newcomers.  
 
 ## Features
 
