@@ -85,34 +85,37 @@ class Inspector:
         """
 
         P = {}
-        inspector = self.introspection.inspect(object)
-        
-        # properties
-        properties = inspector.getProperties(_PROPERTY_CONCEPT_ALL)
-        for property in properties:
-            try:
-                # name
-                p_name = str(property.Name)
-                P[p_name] = {}
-                # type
-                typ = str(property.Type)
-                typ = typ.split('(')
-                typ = typ[0].replace('<Type instance ', '')
-                typ = typ.replace('com.sun.star', '')
-                P[p_name]['type'] = typ.strip()
-                # repr
-                v = object.getPropertyValue(p_name)
-                t = str(v)
-                if t.startswith("pyuno object"):
-                    v = "()"
-                if t.startswith("("):
-                    v = "()"
-                
-                P[p_name]['repr'] = str(v)
+        try:
+            inspector = self.introspection.inspect(object)
             
-            except Exception as err:
-                P[p_name]['type'] = 'ERROR'
-                P[p_name]['repr'] = str(err)
+            # properties
+            properties = inspector.getProperties(_PROPERTY_CONCEPT_ALL)
+            for property in properties:
+                try:
+                    # name
+                    p_name = str(property.Name)
+                    P[p_name] = {}
+                    # type
+                    typ = str(property.Type)
+                    typ = typ.split('(')
+                    typ = typ[0].replace('<Type instance ', '')
+                    typ = typ.replace('com.sun.star', '')
+                    P[p_name]['type'] = typ.strip()
+                    # repr
+                    v = object.getPropertyValue(p_name)
+                    t = str(v)
+                    if t.startswith("pyuno object"):
+                        v = "()"
+                    if t.startswith("("):
+                        v = "()"
+                    
+                    P[p_name]['repr'] = str(v)
+                
+                except Exception as err:
+                    P[p_name]['type'] = 'ERROR'
+                    P[p_name]['repr'] = str(err)
+        except:
+            pass
 
         return P
 
@@ -124,69 +127,73 @@ class Inspector:
         """
 
         M = {}
-        inspector = self.introspection.inspect(object)
         
-        # methods
-        methods = inspector.getMethods(_METHOD_CONCEPT_ALL)
-        for method in methods:
+        try:
+            inspector = self.introspection.inspect(object)
             
-            # name
-            m_name = str(method.Name)
-            try:    
-                M[m_name] = {}
-                # type
-                typ = str(method.getReturnType().getName())
-                typ = typ.replace('com.sun.star', '')
-                M[m_name]['type'] = typ
+            # methods
+            methods = inspector.getMethods(_METHOD_CONCEPT_ALL)
+            for method in methods:
                 
-                all_items = []
-                # name access
-                if m_name == 'getByName':
-                    items = object.getElementNames()
-                    # escape bytes
-                    for item in items:
-                        all_items.append(str(item))
-                    M[m_name]['items'] = sorted(all_items)
-                
-                # index access
-                elif m_name == 'getByIndex':
-                    items = object.getCount()
-                    M[m_name]['items'] = [str(item) for item in range(0, items)]
-                
-                # supported services
-                elif m_name == 'getSupportedServiceNames':
-                    items = object.getSupportedServiceNames()
-                    M[m_name]['items'] = sorted(items)
-                
-                # enumerate
-                elif m_name == 'createEnumeration':
-                    idx = len(list(object))
-                    all_items.append(str(idx))
-                    M[m_name]['items'] = all_items
-                
-                else:
-                    # pass
-                    M[m_name]['items'] = all_items
-    
-                # repr
-                args = method.ParameterTypes
-                infos = method.ParameterInfos
-                
-                params = "( "
-                for i in range(0, len(args)):
+                # name
+                m_name = str(method.Name)
+                try:    
+                    M[m_name] = {}
+                    # type
+                    typ = str(method.getReturnType().getName())
+                    typ = typ.replace('com.sun.star', '')
+                    M[m_name]['type'] = typ
                     
-                    params = params + _mode_to_str(infos[i].aMode) + " " + str(args[i].Name) + " " + str(infos[i].aName) + ", "
+                    all_items = []
+                    # name access
+                    if m_name == 'getByName':
+                        items = object.getElementNames()
+                        # escape bytes
+                        for item in items:
+                            all_items.append(str(item))
+                        M[m_name]['items'] = sorted(all_items)
+                    
+                    # index access
+                    elif m_name == 'getByIndex':
+                        items = object.getCount()
+                        M[m_name]['items'] = [str(item) for item in range(0, items)]
+                    
+                    # supported services
+                    elif m_name == 'getSupportedServiceNames':
+                        items = object.getSupportedServiceNames()
+                        M[m_name]['items'] = sorted(items)
+                    
+                    # enumerate
+                    elif m_name == 'createEnumeration':
+                        idx = len(list(object))
+                        all_items.append(str(idx))
+                        M[m_name]['items'] = all_items
+                    
+                    else:
+                        # pass
+                        M[m_name]['items'] = all_items
+        
+                    # repr
+                    args = method.ParameterTypes
+                    infos = method.ParameterInfos
+                    
+                    params = "( "
+                    for i in range(0, len(args)):
+                        
+                        params = params + _mode_to_str(infos[i].aMode) + " " + str(args[i].Name) + " " + str(infos[i].aName) + ", "
+                    
+                    params = params + ")"
+                    
+                    if params == "()":
+                        params = "()"
+        
+                    M[m_name]['repr'] = str(params)
                 
-                params = params + ")"
-                
-                if params == "()":
-                    params = "()"
-    
-                M[m_name]['repr'] = str(params)
-            
-            except Exception as err:
-                M[m_name]['type'] = 'ERROR'
-                M[m_name]['repr'] = str(err)
+                except Exception as err:
+                    M[m_name]['type'] = 'ERROR'
+                    M[m_name]['repr'] = str(err)
+        except:
+            pass
                 
         return M
 
