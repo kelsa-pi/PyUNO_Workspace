@@ -1,11 +1,11 @@
 # PyUNO Workspace
 
 <p align="center">
-    <b>Pyzo IDE object introspection plugin for PyUNO and LibreOffice UNO API</b>
     <img src="/images/workspace.png">
 </p>
 
-PyUNO Workspace is a modified version of Pyzo's Workspace plugin, designed for Python and PyUNO introspection. 
+
+PyUNO Workspace is a modified version of Pyzo's Workspace plugin, designed for Python and PyUNO introspection. The plugin builds upon Pyzo's tried and tested interactive and introspection capabilities by making them UNO-aware. This allows the developers to inspect arbitrary UNO objects in the same manner as the regular Python objects, as well as providing easy access to UNO API documentation. The final goal is to make the LibreOffice script development a seamless experience for newcomers.  
 
 ## Features
 
@@ -19,7 +19,7 @@ PyUNO Workspace is a modified version of Pyzo's Workspace plugin, designed for P
 * generate code snippet
 * and more:
   * template for macros or custom scripts
-  * search UNO API documentation ([UNO2Dash](https://github.com/kelsa-pi/UNO2Dash) required)
+  * search LibreOffice UNO API documentation ([UNO2Dash](https://github.com/kelsa-pi/UNO2Dash) required)
   
 
 ## Requirements
