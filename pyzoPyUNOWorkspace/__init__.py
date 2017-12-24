@@ -266,7 +266,8 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.setHeaderHidden(False)
         self.setColumnCount(3)
         self.setHeaderLabels(['Name', 'Type', 'Repr'])
-        # self.setColumnWidth(0, 100)
+        # set first column width
+        self.setColumnWidth(0, 170)
         self.setSortingEnabled(True)
 
         # Nice rows
@@ -428,7 +429,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         # Clear first
         self.clear()
         self.resetWidget()
-
+        
         # Set name
         line = self.parent()._line
         line.setText(self._proxy._name)
