@@ -44,7 +44,7 @@ with open(json_file, 'w') as jfile:
 
 def getWorkspaceMenu(help_browser):
     """ Set wokspace context menu. """
-    workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search snippets']
+    workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search snippets', 'sep', 'Check', 'Unmark']
     dash_menu = ['sep', 'Search in ' + help_browser]
     
     if conf_dash == 2:
@@ -59,9 +59,8 @@ help_browser = getDocumentationBrowser()
 # Set workspace context menu    
 workspace_menu = getWorkspaceMenu(help_browser)
 
-# Frequently used arguments 
-drill = ['createEnumeration', 'getByIndex', 'getByName', 'getCellByPosition', 'getCellRangeByPosition', 'getCellRangesByName', 'hasByName']
-
+# Checked items
+checked_dict= {}
 
 def splitName(name):
     """ splitName(name)
@@ -136,7 +135,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         self._name = ''
 
         # Bind to events
-        self._variables = []
+        # self._variables = []
 
         # Element to get more info of
         self._name = ''
@@ -266,7 +265,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.setHeaderHidden(False)
         self.setColumnCount(3)
         self.setHeaderLabels(['Name', 'Type', 'Repr'])
-        # set first column width
+        # Set first column width
         self.setColumnWidth(0, 170)
         self.setSortingEnabled(True)
 
@@ -327,7 +326,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         search = splitName(action._objectName)
         ob = '.'.join(search[:-1])
         search = search[-1]
-
+        
         if 'namespace' in req:
             # Go deeper
             self.onItemExpand(action._item)
@@ -353,7 +352,28 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             # Search in forum snippets
             url = 'https://forum.openoffice.org/en/forum/search.php?keywords=' + search + '&fid[0]=21'
             webbrowser.open(url)
-        
+
+        elif 'check' in req:
+             # Check item
+            
+            if ob in checked_dict:
+                if not search in checked_dict[ob]:
+                    checked_dict[ob].append(search)
+                    self.parent().onRefreshPress()
+            else:
+                checked_dict[ob] = []
+                checked_dict[ob].append(search)
+                self.parent().onRefreshPress()
+
+        elif 'unmark' in req:
+            
+            # Uncheck item
+            if ob in checked_dict:
+                if search in checked_dict[ob]:
+                    checked_dict[ob].remove(search)
+            
+            self.parent().onRefreshPress()
+
         elif 'delete' in req:
             # Delete the variable
             if shell:
@@ -425,7 +445,8 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """ fillWorkspace()
         Update the workspace tree.
         """
-
+        bChecked = False
+        
         # Clear first
         self.clear()
         self.resetWidget()
@@ -434,6 +455,9 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         line = self.parent()._line
         line.setText(self._proxy._name)
 
+        if self._proxy._name in checked_dict:
+            bChecked = True
+           
         # Fill widgets
         self.parent().onAddToHistory(line.text())
         self.fillWidget()
@@ -474,12 +498,17 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             item = PyUNOWorkspaceItem(parts, 0)
             self.addTopLevelItem(item)
 
-            # Set background color for frequently used
-            # methods with arguments
-            if name in drill:
-                item.setBackground(0, QtGui.QColor(224, 224, 224))
-                item.setBackground(1, QtGui.QColor(224, 224, 224))
-                item.setBackground(2, QtGui.QColor(224, 224, 224))
+            # Set background color for checked items
+            if bChecked:
+                if name in checked_dict[self._proxy._name]:
+                    item.setBackground(0, QtGui.QColor(224, 224, 224))
+                    item.setBackground(1, QtGui.QColor(224, 224, 224))
+                    item.setBackground(2, QtGui.QColor(224, 224, 224))
+            else:
+                item.setBackground(0, QtGui.QColor(255, 255, 255))
+                item.setBackground(1, QtGui.QColor(255, 255, 255))
+                item.setBackground(2, QtGui.QColor(255, 255, 255))
+                
 
             # Set tooltip
             tt = '%s: %s' % (parts[0], parts[-1])
@@ -575,6 +604,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._only_m.setText("a")
         self._only_m.setToolTip("Lowercase")
         
+        # Create radio box Checked
+        self._only_star = QtWidgets.QRadioButton(self)
+        # self._only_star.setIcon(style.standardIcon(style.SP_DialogApplyButton))
+        self._only_star.setText("Checked")
+        self._only_star.setToolTip("Checked")
+        
         # Create element_index combo box
         self._element_index = QtWidgets.QComboBox(self)
         self._element_index.setToolTip("Get by index")
@@ -640,7 +675,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         # ------ Set layouts
         
-        # Object and insert code layout
+        # Layout 1: Object and insert code layout
         layout_1 = QtWidgets.QHBoxLayout()
         layout_1.addWidget(self._home, 0)
         layout_1.addWidget(self._refresh, 0)
@@ -649,21 +684,22 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_1.addWidget(self._enumerate, 0)
         layout_1.addWidget(self._insert_code, 0)
         
-        # Argument and option layout
+        # Layout 2: Argument and option layout
         layout_2 = QtWidgets.QHBoxLayout()
         layout_2.addWidget(self._all, 0)
         layout_2.addWidget(self._only_p, 0)
         layout_2.addWidget(self._only_m, 0)
+        layout_2.addWidget(self._only_star, 0)
         layout_2.addWidget(self._element_index, 0)
         layout_2.addWidget(self._element_names, 0)
         layout_2.addWidget(self._history, 1)
         layout_2.addWidget(self._options, 0)
 
-        # Tree layout
+        # Layout 3: Tree layout
         layout_3 = QtWidgets.QVBoxLayout()
         layout_3.addWidget(self._tree, 0)
         
-        # Options layout
+        # Layout 4: Options layout
         layout_4 = QtWidgets.QHBoxLayout()
         layout_4.addWidget(self._argument_label, 0)
         layout_4.addWidget(self._argument_line, 1)
@@ -673,7 +709,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_4.addWidget(self._dash, 0)
         layout_4.addWidget(self._option_save, 0)
         
-        # Set main layout
+        # Main Layout
         mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.addLayout(layout_1, 0)
         mainLayout.addLayout(layout_2, 0)
@@ -694,6 +730,8 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._all.toggled.connect(lambda:self.onRadioChangeState(self._all))
         self._only_p.toggled.connect(lambda:self.onRadioChangeState(self._only_p))
         self._only_m.toggled.connect(lambda:self.onRadioChangeState(self._only_m))
+        self._only_star.toggled.connect(lambda:self.onRadioChangeState(self._only_star))
+        #
         self._element_names.activated[str].connect(self.onElementNamesPress)
         self._element_index.activated[str].connect(self.onElementIndexPress)
         self._history.activated[str].connect(self.onBackToHistory)
@@ -714,7 +752,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
     def onRefreshPress(self):
         """ Refresh """
-        item = self._tree.currentItem()
+        # item = self._tree.currentItem()
         line = self._line.text()
         self._tree._proxy.setName(line)
     
@@ -785,7 +823,17 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
                     self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
                 else:
                     self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
-        
+            
+            # Checked
+            if radiobox.text() == "Checked" and radiobox.isChecked() is True:
+                if self._line.text() in checked_dict:
+                    if name in checked_dict[self._line.text()]:
+                        self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
+                    else:
+                        self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
+                else:
+                    pass
+
     def onEnumeratePress(self):
         """ Create enumeration """
         line = self._line.text()
