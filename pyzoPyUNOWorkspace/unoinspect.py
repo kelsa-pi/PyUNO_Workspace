@@ -18,10 +18,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+
 import uno
 from json import dump
 import pickle
-import sys
 from com.sun.star.beans.MethodConcept import \
     ALL as _METHOD_CONCEPT_ALL
 from com.sun.star.beans.PropertyConcept import \
@@ -58,21 +58,14 @@ class Inspector:
     """Object introspection
 
     """
-    def __init__(self, context=None):
+    def __init__(self):
         
-        if context:
-            try:
-                self.ctx = context
-            except Exception as err:
-                print(err)
-        else:
-            try:
-                self.ctx = uno.getComponentContext()
-            except Exception as err:
-                print(err)
-                
+        try:
+            self.ctx = uno.getComponentContext()
+        except Exception as err:
+            print(err)
+        
         self.smgr = self.ctx.ServiceManager
-        self.desktop = self.ctx.getValueByName('/singletons/com.sun.star.frame.theDesktop')
         self.introspection = self.ctx.getValueByName("/singletons/com.sun.star.beans.theIntrospection")
         self.reflection = self.ctx.getValueByName("/singletons/com.sun.star.reflection.theCoreReflection")
         self.documenter = self.ctx.getValueByName('/singletons/com.sun.star.util.theServiceDocumenter')
@@ -118,7 +111,7 @@ class Inspector:
             pass
 
         return P
-
+    
     def _inspectMethods(self, object):
         """Inspect methods
 
@@ -197,17 +190,19 @@ class Inspector:
                 
         return M
 
-    def inspect(self, object, item=None, output='json', dir=_DIR, filename=_RESULTFILE):
+    def inspect(self, object, result='a', item=None, output='json', dir=_DIR, filename=_RESULTFILE):
         """Inspect object
 
-        :param object: Inspect this object
-        :param item: List of properties and methods to inspect, optional
-        :param output: 'stdout': display result in sys.stdout
-                       'console': display result in terminal
-                       'dict': return dict
-                       'json': store result in json file, default
-                       'pickle': store result in pickle file
-                       'csv': store result in csv file
+        :param object:  Inspect this object
+        :param result:  'a': inspect properties and methods
+                        'm': inspect methods only
+                        'p': inspect properties only
+        :param item:    List of properties and methods to inspect, optional
+        :param output:  'console': display result in terminal
+                        'dict': return dict
+                        'json': store result in json file, default
+                        'pickle': store result in pickle file
+                        'csv': store result in csv file
                        
         :param dir: full output directory path, use with 'json', 'pickle' or 'csv'
         :param filename: output file name, use with 'json', 'pickle' or 'csv'
@@ -215,25 +210,42 @@ class Inspector:
         
         Return properties and methods
         """
-        p = self._inspectProperties(object)
-        m = self._inspectMethods(object)
-        
         # store result in dictionary
         context = {}
-        if item is None:
-            context.update(sorted(p.items()))
-            context.update(sorted(m.items()))
-        else:
-            for k, v in p.items():
-                if k in item:
-                    context[k] = v
-            for k, v in m.items():
-                if k in item:
-                    context[k] = v
+        if result== 'a':
+            # inspect properties and methods
+            p = self._inspectProperties(object)
+            m = self._inspectMethods(object)
+            if item is None:
+                context.update(sorted(p.items()))
+                context.update(sorted(m.items()))
+            else:
+                for k, v in p.items():
+                    if k in item:
+                        context[k] = v
+                for k, v in m.items():
+                    if k in item:
+                        context[k] = v
         
-        # write result in sys.stdout
-        if output == 'stdout':
-            sys.stdout.write(str(context) + '\n')
+        elif result== 'm':
+            # inspect methods only
+            m = self._inspectMethods(object)
+            if item is None:
+                context.update(sorted(m.items()))
+            else:
+                for k, v in m.items():
+                    if k in item:
+                        context[k] = v
+        
+        elif result== 'p':
+            # inspect properties only
+            p = self._inspectProperties(object)
+            if item is None:
+                context.update(sorted(p.items()))
+            else:
+                for k, v in p.items():
+                    if k in item:
+                        context[k] = v
         
         # display result in terminal
         if output == 'console':
@@ -272,7 +284,7 @@ class Inspector:
             file_path = join(_DIR, filename)
             with open(file_path, 'w') as outfile:
                 outfile.write(data)
-
+                
     def showServiceDocs(self, object):
         """Open browser to show service documentation
         :param object:
