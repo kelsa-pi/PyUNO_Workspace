@@ -44,7 +44,7 @@ with open(json_file, 'w') as jfile:
 
 def getWorkspaceMenu(help_browser):
     """ Set wokspace context menu. """
-    workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search snippets', 'sep', 'Check', 'Unmark']
+    workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search in snippets', 'sep', 'Check', 'Unmark']
     dash_menu = ['sep', 'Search in ' + help_browser]
     
     if conf_dash == 2:
@@ -167,7 +167,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
             if str(self._name) == '':
                 pass
             else:
-                shell.executeCommand("Inspector(context=ctx).inspect(" + str(self._name) + ")\n")
+                shell.executeCommand("Inspector().inspect(" + str(self._name) + ", result='m')\n")
             # via pyzo
             future = shell._request.dir2(self._name)
             future.add_done_callback(self.processResponse)
@@ -317,9 +317,9 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """ contextMenuTriggered(action)
         Process a request from the context menu.
         """
-        
+
         # Get text
-        req = action.text().lower()
+        req = action.text()
         # Get current shell
         shell = pyzo.shells.getCurrentShell()
 
@@ -327,35 +327,34 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         ob = '.'.join(search[:-1])
         search = search[-1]
         
-        if 'namespace' in req:
+        if 'Show namespace' in req:
             # Go deeper
             self.onItemExpand(action._item)
 
-        elif 'help' in req:
+        elif 'Show help' in req:
             # Show help in help tool (if loaded)
             hw = pyzo.toolManager.getTool('pyzointeractivehelp')
             if hw:
                 hw.setObjectName(action._objectName)
 
         # ------- PyUNO ----------------
-        elif help_browser.lower() in req:
+        elif help_browser in req:
             # Search in Dash-like offline browser
             t = threading.Thread(None, subprocess.call([help_browser.lower(), search]))
             t.start()
 
-        elif 'forum' in req:
+        elif 'Search in forum' in req:
             # Search in forum
             url = 'https://forum.openoffice.org/en/forum/search.php?keywords=' + search + '&fid[0]=20'
             webbrowser.open(url)
 
-        elif 'snippets' in req:
+        elif 'Search in snippets' in req:
             # Search in forum snippets
             url = 'https://forum.openoffice.org/en/forum/search.php?keywords=' + search + '&fid[0]=21'
             webbrowser.open(url)
 
-        elif 'check' in req:
+        elif 'Check' in req:
              # Check item
-            
             if ob in checked_dict:
                 if not search in checked_dict[ob]:
                     checked_dict[ob].append(search)
@@ -365,8 +364,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 checked_dict[ob].append(search)
                 self.parent().onRefreshPress()
 
-        elif 'unmark' in req:
-            
+        elif 'Unmark' in req:
             # Uncheck item
             if ob in checked_dict:
                 if search in checked_dict[ob]:
@@ -374,7 +372,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             
             self.parent().onRefreshPress()
 
-        elif 'delete' in req:
+        elif 'Delete' in req:
             # Delete the variable
             if shell:
                 shell.processLine('del ' + action._objectName)
