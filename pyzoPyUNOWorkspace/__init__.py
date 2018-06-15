@@ -16,7 +16,7 @@ from inspect import getsourcefile
 import webbrowser
 import pyzo
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
-from .helper import configStringToInt #, getDocumentationBrowser
+from .helper import configStringToInt
 
 tool_name = pyzo.translate("pyzoPyUNOWorkspace", "PyUNO Workspace")
 tool_summary = "Lists Python and PyUNO variables in the current shell's namespace."
