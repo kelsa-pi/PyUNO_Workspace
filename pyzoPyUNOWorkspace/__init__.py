@@ -855,6 +855,30 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # show
         self._history.addItems(new_list)
 
+    def onForwardPress(self):
+        all_items = self._desc_all_items.text()
+
+        row = self._description.currentRow()
+        counter = row + 1
+        self._description.setCurrentRow(counter)
+
+        if counter == int(all_items):
+            self._desc_counter.setText("0")
+        else:
+            self._desc_counter.setText(str(counter + 1))
+
+    def onBackPress(self):
+        all_items = self._desc_all_items.text()
+
+        row = self._description.currentRow()
+        counter = row - 1
+        self._description.setCurrentRow(counter)
+
+        if self._description.currentRow() < 0:
+            self._desc_counter.setText("0")
+        else:
+            self._desc_counter.setText(str(counter + 1))
+
     def onOptionsPress(self):
         """ Create the menu for the button, Do each time to make sure
         the checks are right. """
