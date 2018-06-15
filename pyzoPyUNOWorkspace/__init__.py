@@ -620,7 +620,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # Create tree
         self._tree = PyUNOWorkspaceTree(self)
         
-        # ----- Layout4 -----
+        # ----- Layout 4 -----
         
         # Create "argument_label" label
         self._argument_label = QtWidgets.QLabel(self)
@@ -648,7 +648,35 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._option_save = QtWidgets.QToolButton(self)
         self._option_save.setText("Save")
         self._option_save.setToolTip("Save all options")
-        
+
+        # ----- Layout 5 -----
+        self._help_back = QtWidgets.QToolButton(self)
+        self._help_back.setIcon(style.standardIcon(style.SP_ArrowLeft))
+        self._help_back.setIconSize(QtCore.QSize(16, 16))
+        self._help_back.setToolTip("Go back")
+        #
+        self._help_forward = QtWidgets.QToolButton(self)
+        self._help_forward.setIcon(style.standardIcon(style.SP_ArrowRight))
+        self._help_forward.setIconSize(QtCore.QSize(16, 16))
+        self._help_forward.setToolTip("Go forward")
+        #
+        self._desc_counter = QtWidgets.QLabel(self)
+        self._desc_counter.setText("0")
+        #
+        self._desc_of = QtWidgets.QLabel(self)
+        self._desc_of.setText(" of ")
+        #
+        self._desc_all_items = QtWidgets.QLabel(self)
+        self._desc_all_items.setText("0")
+
+        # ----- Layout 6 -----
+        self._description = QtWidgets.QListWidget(self)
+        self._description.setWordWrap(True)
+        self._description.setAutoFillBackground(True)
+        self._description.setAlternatingRowColors(True)
+        self._description.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self._description.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+
         # ------ Set layouts
         
         # Layout 1: Object and insert code layout
@@ -683,12 +711,26 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_4.addWidget(self._impl_name, 1)
         layout_4.addWidget(self._option_label, 0)
         layout_4.addWidget(self._option_save, 0)
-        
+
+        # Layout 5: Help navigation layout
+        layout_5 = QtWidgets.QHBoxLayout()
+        layout_5.addWidget(self._help_back, 0)
+        layout_5.addWidget(self._help_forward, 0)
+        layout_5.addWidget(self._desc_counter, 0)
+        layout_5.addWidget(self._desc_of, 0)
+        layout_5.addWidget(self._desc_all_items, 1)
+
+        # Layout 5: Help description layout
+        layout_6 = QtWidgets.QVBoxLayout()
+        layout_6.addWidget(self._description, 0)
+
         # Main Layout
         mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.addLayout(layout_1, 0)
         mainLayout.addLayout(layout_2, 0)
         mainLayout.addLayout(layout_3, 0)
+        mainLayout.addLayout(layout_5, 0)
+        mainLayout.addLayout(layout_6, 0)
         mainLayout.addLayout(layout_4, 0)
         mainLayout.setSpacing(2)
         mainLayout.setContentsMargins(4, 4, 4, 4)
