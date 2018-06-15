@@ -13,6 +13,7 @@ import os
 import re
 from json import load
 from inspect import getsourcefile
+import sqlite3
 import webbrowser
 import pyzo
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
@@ -36,6 +37,10 @@ RESULTFILE = 'result.txt'
 RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
 with open(RESULT, 'w') as jfile:
     jfile.write('{}')
+
+# documentation database
+UNODOC_DB = os.path.join(WORKSPACE_DIR, 'unoDoc.db')
+conn = sqlite3.connect(UNODOC_DB)
 
 # Checked items
 checked_dict= {}
