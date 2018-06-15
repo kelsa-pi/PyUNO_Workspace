@@ -43,7 +43,8 @@ UNODOC_DB = os.path.join(WORKSPACE_DIR, 'unoDoc.db')
 conn = sqlite3.connect(UNODOC_DB)
 
 # Checked items
-checked_dict= {}
+checked_dict = {}
+
 
 def splitName(name):
     """ splitName(name)
@@ -340,7 +341,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         elif 'Check' in req:
             # Check item
             if ob in checked_dict:
-                if not search in checked_dict[ob]:
+                if search not in checked_dict[ob]:
                     checked_dict[ob].append(search)
                     self.parent().onRefreshPress()
             else:
@@ -458,7 +459,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             # Implementation name
             if name == 'ImplementationName':
                 impl_name = parts[3].replace('com.sun.star', '~')
-                self.parent()._impl_name.setText(impl_name )
+                self.parent()._impl_name.setText(impl_name)
             
             # Methods
             if name[0].islower() or name == 'HasExecutableCode':
@@ -490,7 +491,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 item.setBackground(0, QtGui.QColor(255, 255, 255))
                 item.setBackground(1, QtGui.QColor(255, 255, 255))
                 item.setBackground(2, QtGui.QColor(255, 255, 255))
-                
 
             # Set tooltip
             tt = '%s: %s' % (parts[0], parts[-1])
@@ -789,10 +789,10 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._enumerate.pressed.connect(self.onEnumeratePress)
         self._insert_code.pressed.connect(self.onInsertCodeInEditor)
         #
-        self._all.toggled.connect(lambda:self.onRadioChangeState(self._all))
-        self._only_p.toggled.connect(lambda:self.onRadioChangeState(self._only_p))
-        self._only_m.toggled.connect(lambda:self.onRadioChangeState(self._only_m))
-        self._only_star.toggled.connect(lambda:self.onRadioChangeState(self._only_star))
+        self._all.toggled.connect(lambda: self.onRadioChangeState(self._all))
+        self._only_p.toggled.connect(lambda: self.onRadioChangeState(self._only_p))
+        self._only_m.toggled.connect(lambda: self.onRadioChangeState(self._only_m))
+        self._only_star.toggled.connect(lambda: self.onRadioChangeState(self._only_star))
         #
         self._element_names.activated[str].connect(self.onElementNamesPress)
         self._element_index.activated[str].connect(self.onElementIndexPress)
@@ -937,7 +937,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         """ Record history """
         old_list = [self._history.itemText(i) for i in range(self._history.count())]
         # add new to list
-        if not data in old_list:
+        if data not in old_list:
             old_list.append(data)
         # sort
         new_list = sorted(old_list)
@@ -977,9 +977,9 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         menu = self._options._menu
         menu.clear()
 
-        for type in ['type', 'function', 'module', 'private']:
-            checked = type in self._config.hideTypes
-            action = menu.addAction('Hide %s' % type)
+        for typ in ['type', 'function', 'module', 'private']:
+            checked = typ in self._config.hideTypes
+            action = menu.addAction('Hide %s' % typ)
             action.setCheckable(True)
             action.setChecked(checked)
     
