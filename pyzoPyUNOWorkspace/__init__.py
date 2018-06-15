@@ -211,8 +211,8 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         self._variables = response
         
         # via unoinspect - read json
-        myfile = os.path.join(WORKSPACE_DIR, RESULTFILE) 
-        with open(myfile) as resultf:
+        myfile = os.path.join(WORKSPACE_DIR, RESULTFILE)
+        with open(RESULT) as resultf:
             self._uno_dict = load(resultf)
         self.haveNewData.emit()
 

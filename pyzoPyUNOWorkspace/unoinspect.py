@@ -261,7 +261,7 @@ class Inspector:
         
         # store result in json file
         elif output == 'json':
-            file_path = join(_DIR, filename)
+            file_path = join(dir, filename)
             with open(file_path, 'w') as outfile:
                 dump(context, outfile, indent=4)
         
