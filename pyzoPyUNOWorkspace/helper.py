@@ -11,18 +11,18 @@ def configStringToInt(bstring):
     return bint
 
 
-def getDocumentationBrowser():
-    """Determine documentation browser"""
-    
-    help_browser = ''
-    if platform.system() == 'Linux':
-        help_browser = 'Zeal'
-    elif platform.system() == 'OSX':
-        help_browser = 'Dash'
-    elif platform.system() == 'Windows':
-        help_browser = 'Velocity'
-    
-    return help_browser
+# def getDocumentationBrowser():
+#     """Determine documentation browser"""
+#
+#     help_browser = ''
+#     if platform.system() == 'Linux':
+#         help_browser = 'Zeal'
+#     elif platform.system() == 'OSX':
+#         help_browser = 'Dash'
+#     elif platform.system() == 'Windows':
+#         help_browser = 'Velocity'
+#
+#     return help_browser
     
 
 

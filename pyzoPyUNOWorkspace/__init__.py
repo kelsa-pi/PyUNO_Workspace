@@ -13,12 +13,10 @@ import os
 import re
 from json import load
 from inspect import getsourcefile
-import subprocess
-import threading
 import webbrowser
 import pyzo
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
-from .helper import configStringToInt, getDocumentationBrowser
+from .helper import configStringToInt #, getDocumentationBrowser
 
 tool_name = pyzo.translate("pyzoPyUNOWorkspace", "PyUNO Workspace")
 tool_summary = "Lists Python and PyUNO variables in the current shell's namespace."
@@ -32,33 +30,12 @@ conf_file = os.path.join(WORKSPACE_DIR, 'config.ini')
 config = configparser.ConfigParser()
 config.read(conf_file)
 
-# Get configuration options
-conf_dash = configStringToInt(config.get('GENERAL', 'dash'))
-
 # JSON serialization paths
 RESULTFILE = 'result.txt'
 
 RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
 with open(RESULT, 'w') as jfile:
     jfile.write('{}')
-
-
-def getWorkspaceMenu(help_browser):
-    """ Set wokspace context menu. """
-    workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search in snippets', 'sep', 'Check', 'Unmark']
-    dash_menu = ['sep', 'Search in ' + help_browser]
-    
-    if conf_dash == 2:
-        workspace_menu = workspace_menu + dash_menu
-
-    return workspace_menu
-
-
-# Set documentation browser
-help_browser = getDocumentationBrowser()
-
-# Set workspace context menu    
-workspace_menu = getWorkspaceMenu(help_browser)
 
 # Checked items
 checked_dict= {}
@@ -301,6 +278,10 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         # Create menu
         self._menu.clear()
 
+        # menu items
+        workspace_menu = ['Show namespace', 'Show help', 'Delete', 'sep', 'Search in forum', 'Search in snippets',
+                          'sep', 'Check', 'Unmark']
+
         for a in workspace_menu:
             if a == 'sep':
                 self._menu.addSeparator()
@@ -339,10 +320,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 hw.setObjectName(action._objectName)
 
         # ------- PyUNO ----------------
-        elif help_browser in req:
-            # Search in Dash-like offline browser
-            t = threading.Thread(None, subprocess.call([help_browser.lower(), search]))
-            t.start()
 
         elif 'Search in forum' in req:
             # Search in forum
@@ -355,7 +332,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             webbrowser.open(url)
 
         elif 'Check' in req:
-             # Check item
+            # Check item
             if ob in checked_dict:
                 if not search in checked_dict[ob]:
                     checked_dict[ob].append(search)
@@ -663,11 +640,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._option_label = QtWidgets.QLabel(self)
         self._option_label.setText(" Options: ")
         #
-        self._dash = QtWidgets.QCheckBox(self)
-        self._dash.setText('Dash')
-        self._dash.setToolTip("Use Dash as document browser")
-        self._dash.setCheckState(conf_dash)
-        #
         self._option_save = QtWidgets.QToolButton(self)
         self._option_save.setText("Save")
         self._option_save.setToolTip("Save all options")
@@ -705,7 +677,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_4.addWidget(self._info_label, 0)
         layout_4.addWidget(self._impl_name, 1)
         layout_4.addWidget(self._option_label, 0)
-        layout_4.addWidget(self._dash, 0)
+        ## layout_4.addWidget(self._dash, 0)
         layout_4.addWidget(self._option_save, 0)
         
         # Main Layout
