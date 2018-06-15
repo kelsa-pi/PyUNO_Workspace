@@ -713,6 +713,9 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._options.pressed.connect(self.onOptionsPress)
         self._options._menu.triggered.connect(self.onOptionMenuTiggered)
         #
+        self._help_back.pressed.connect(self.onBackPress)
+        self._help_forward.pressed.connect(self.onForwardPress)
+        #
         self._option_save.pressed.connect(self.onSaveOptionsInConf)
 
     # ---------------------------- 
