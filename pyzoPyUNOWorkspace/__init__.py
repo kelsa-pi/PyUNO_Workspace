@@ -267,6 +267,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # Bind to events
         self.itemActivated.connect(self.onItemExpand)
+        self.clicked.connect(self.onItemClicked)
 
     def contextMenuEvent(self, event):
         """ contextMenuEvent(event)
@@ -501,6 +502,51 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # Clear UNO dict
         self._proxy._uno_dic = {}
+
+    def onItemClicked(self):
+        """ onItemClicked()
+        When item clicked in the workspace tree show help
+        """
+
+        self.parent()._description.clear()
+        item = QtWidgets.QListWidgetItem()
+
+        index = self.currentIndex()
+        find = index.model().data(index)
+        if find.startswith('get'):
+            getfind = find.replace('get', '')
+        else:
+            getfind = 'get' + find
+
+        cur = conn.cursor()
+        cur.execute("SELECT signature, description FROM UNOtable WHERE name=? OR name =?", (find, getfind))
+        rows = cur.fetchall()
+        self.parent()._desc_all_items.setText(str(len(rows)))
+        self.parent()._desc_counter.setText("0")
+
+        try:
+            res = ''
+            n = 0
+            for sig, desc in rows:
+                sig = sig.replace('raises', '\nraises')
+                sig = sig.replace('set \nraises', '\nset raises')
+                sig = sig.replace('get \nraises', '\nget raises')
+
+                desc = desc.replace('&newline&&newline&', '&newline&')
+                desc = desc.replace('&newline&', '\n')
+                desc = desc.replace('Returnsan', 'Returns an')
+                desc = desc.replace('Returnssequence', 'Returns sequence')
+                desc = desc.replace('Returnsthe', 'Returns the')
+                desc = desc.replace('Returnsa', 'Returns a')
+                # desc = desc.replace('Parameters','\nParameters')
+
+                res = sig + '\n' + desc + '-' * 80
+
+                self.parent()._description.addItem(res)
+                # n=+1
+
+        except:
+            pass
 
 
 class PyzoPyUNOWorkspace(QtWidgets.QWidget):
@@ -737,7 +783,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self.setLayout(mainLayout)
 
         # ------ Bind events
-
         self._home.pressed.connect(self.onHomePress)
         self._refresh.pressed.connect(self.onRefreshPress)
         self._up.pressed.connect(self._tree._proxy.goUp)
