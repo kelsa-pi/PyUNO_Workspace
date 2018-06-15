@@ -23,9 +23,12 @@ from .helper import configStringToInt, getDocumentationBrowser
 tool_name = pyzo.translate("pyzoPyUNOWorkspace", "PyUNO Workspace")
 tool_summary = "Lists Python and PyUNO variables in the current shell's namespace."
 
+# Constants
+WORKSPACE_INIT = os.path.abspath(getsourcefile(lambda: 0))
+WORKSPACE_DIR = os.path.dirname(WORKSPACE_INIT)
+
 # Read configuration
-full_path = os.path.dirname(__file__)
-conf_file = os.path.join(full_path, 'config.ini')
+conf_file = os.path.join(WORKSPACE_DIR, 'config.ini')
 config = configparser.ConfigParser()
 config.read(conf_file)
 
@@ -33,12 +36,10 @@ config.read(conf_file)
 conf_dash = configStringToInt(config.get('GENERAL', 'dash'))
 
 # JSON serialization paths
-WORKSPACE_PATH = os.path.abspath(getsourcefile(lambda: 0))
-WORKSPACE_DIR = os.path.dirname(WORKSPACE_PATH)
 RESULTFILE = 'result.txt'
 
-json_file = os.path.join(WORKSPACE_DIR, RESULTFILE) 
-with open(json_file, 'w') as jfile:  
+RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
+with open(RESULT, 'w') as jfile:
     jfile.write('{}')
 
 
@@ -228,8 +229,8 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         
         # via unoinspect - read json
         myfile = os.path.join(WORKSPACE_DIR, RESULTFILE) 
-        with open(myfile) as json_file:  
-            self._uno_dict = load(json_file)
+        with open(myfile) as resultf:
+            self._uno_dict = load(resultf)
         self.haveNewData.emit()
 
 
