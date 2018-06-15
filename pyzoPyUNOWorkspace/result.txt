@@ -1,35 +1,10 @@
 {
-    "addVetoableChangeListener": {
-        "repr": "( [in] string PropertyName, [in] com.sun.star.beans.XVetoableChangeListener aListener, )",
+    "storeSelf": {
+        "repr": "( [in] []com.sun.star.beans.PropertyValue lArguments, )",
         "items": [],
         "type": "void"
     },
-    "close": {
-        "repr": "( [in] boolean DeliverOwnership, )",
-        "items": [],
-        "type": "void"
-    },
-    "getLinks": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "getIdentifier": {
-        "repr": "( )",
-        "items": [],
-        "type": "string"
-    },
-    "getReferenceMarks": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "addPrintJobListener": {
-        "repr": "( [in] com.sun.star.view.XPrintJobListener xListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "updateLinks": {
+    "cancelCheckOut": {
         "repr": "( )",
         "items": [],
         "type": "void"
@@ -39,37 +14,62 @@
         "items": [],
         "type": "any"
     },
-    "render": {
-        "repr": "( [in] long nRenderer, [in] any aSelection, [in] []com.sun.star.beans.PropertyValue xOptions, )",
-        "items": [],
-        "type": "void"
-    },
-    "storeAsURL": {
-        "repr": "( [in] string sURL, [in] []com.sun.star.beans.PropertyValue lArguments, )",
-        "items": [],
-        "type": "void"
-    },
-    "disposing": {
-        "repr": "( [in] com.sun.star.lang.EventObject Source, )",
-        "items": [],
-        "type": "void"
-    },
-    "getImplementationId": {
+    "getCurrentSelection": {
         "repr": "( )",
         "items": [],
-        "type": "[]byte"
+        "type": ".uno.XInterface"
     },
-    "addModifyListener": {
-        "repr": "( [in] com.sun.star.util.XModifyListener aListener, )",
+    "setTitle": {
+        "repr": "( [in] string sTitle, )",
         "items": [],
         "type": "void"
+    },
+    "getAllVersions": {
+        "repr": "( )",
+        "items": [],
+        "type": "[].document.CmisVersion"
+    },
+    "addMetadataFile": {
+        "repr": "( [in] string FileName, [in] []com.sun.star.rdf.XURI Types, )",
+        "items": [],
+        "type": ".rdf.XURI"
+    },
+    "addDocumentEventListener": {
+        "repr": "( [in] com.sun.star.document.XDocumentEventListener Listener, )",
+        "items": [],
+        "type": "void"
+    },
+    "getIdentifier": {
+        "repr": "( )",
+        "items": [],
+        "type": "string"
+    },
+    "queryInterface": {
+        "repr": "( [in] type aType, )",
+        "items": [],
+        "type": "any"
+    },
+    "disconnectController": {
+        "repr": "( [in] com.sun.star.frame.XController Controller, )",
+        "items": [],
+        "type": "void"
+    },
+    "setPrinter": {
+        "repr": "( [in] []com.sun.star.beans.PropertyValue aPrinter, )",
+        "items": [],
+        "type": "void"
+    },
+    "getFootnoteSettings": {
+        "repr": "( )",
+        "items": [],
+        "type": ".beans.XPropertySet"
+    },
+    "getPropertySetInfo": {
+        "repr": "( )",
+        "items": [],
+        "type": ".beans.XPropertySetInfo"
     },
     "dispose": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "refresh": {
         "repr": "( )",
         "items": [],
         "type": "void"
@@ -79,20 +79,640 @@
         "items": [],
         "type": "boolean"
     },
-    "setPrinter": {
-        "repr": "( [in] []com.sun.star.beans.PropertyValue aPrinter, )",
+    "isModified": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "lockControllers": {
+        "repr": "( )",
         "items": [],
         "type": "void"
+    },
+    "getUntitledPrefix": {
+        "repr": "( )",
+        "items": [],
+        "type": "string"
+    },
+    "getUIConfigurationManager": {
+        "repr": "( )",
+        "items": [],
+        "type": ".ui.XUIConfigurationManager"
+    },
+    "disposing": {
+        "repr": "( [in] com.sun.star.lang.EventObject Source, )",
+        "items": [],
+        "type": "void"
+    },
+    "setViewData": {
+        "repr": "( [in] com.sun.star.container.XIndexAccess Data, )",
+        "items": [],
+        "type": "void"
+    },
+    "attachResource": {
+        "repr": "( [in] string URL, [in] []com.sun.star.beans.PropertyValue Arguments, )",
+        "items": [],
+        "type": "boolean"
+    },
+    "addDialog": {
+        "repr": "( [in] string LibraryName, [in] string DialogName, [in] []byte Data, )",
+        "items": [],
+        "type": "void"
+    },
+    "getTextFields": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XEnumerationAccess"
+    },
+    "getPagePrintSettings": {
+        "repr": "( )",
+        "items": [],
+        "type": "[].beans.PropertyValue"
+    },
+    "getSomething": {
+        "repr": "( [in] []byte aIdentifier, )",
+        "items": [],
+        "type": "hyper"
+    },
+    "getPropertyState": {
+        "repr": "( [in] string PropertyName, )",
+        "items": [],
+        "type": ".beans.PropertyState"
+    },
+    "wasModifiedSinceLastSave": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "getAutoStyles": {
+        "repr": "( )",
+        "items": [],
+        "type": ".style.XAutoStyles"
+    },
+    "isReadonly": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "removeRefreshListener": {
+        "repr": "( [in] com.sun.star.util.XRefreshListener l, )",
+        "items": [],
+        "type": "void"
+    },
+    "loadFromStorage": {
+        "repr": "( [in] com.sun.star.embed.XStorage xStorage, [in] []com.sun.star.beans.PropertyValue aMediaDescriptor, )",
+        "items": [],
+        "type": "void"
+    },
+    "updateCmisProperties": {
+        "repr": "( [in] []com.sun.star.document.CmisProperty cmisProperties, )",
+        "items": [],
+        "type": "void"
+    },
+    "initNew": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "getRDFRepository": {
+        "repr": "( )",
+        "items": [],
+        "type": ".rdf.XRepository"
+    },
+    "removeModifyListener": {
+        "repr": "( [in] com.sun.star.util.XModifyListener aListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "addCloseListener": {
+        "repr": "( [in] com.sun.star.util.XCloseListener Listener, )",
+        "items": [],
+        "type": "void"
+    },
+    "load": {
+        "repr": "( [in] []com.sun.star.beans.PropertyValue lArguments, )",
+        "items": [],
+        "type": "void"
+    },
+    "getNumberingRules": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XIndexAccess"
+    },
+    "getDocumentLanguages": {
+        "repr": "( [in] short nScriptTypes, [in] short nCount, )",
+        "items": [],
+        "type": "[].lang.Locale"
+    },
+    "removeStorageChangeListener": {
+        "repr": "( [in] com.sun.star.document.XStorageChangeListener xListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "createLibrary": {
+        "repr": "( [in] string LibName, [in] string Password, [in] string ExternalSourceURL, [in] string LinkTargetURL, )",
+        "items": [],
+        "type": "void"
+    },
+    "release": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "importMetadataFile": {
+        "repr": "( [in] short Format, [in] com.sun.star.io.XInputStream InStream, [in] string FileName, [in] com.sun.star.rdf.XURI BaseURI, [in] []com.sun.star.rdf.XURI Types, )",
+        "items": [],
+        "type": ".rdf.XURI"
+    },
+    "store": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "setParent": {
+        "repr": "( [in] com.sun.star.uno.XInterface Parent, )",
+        "items": [],
+        "type": "void"
+    },
+    "getLineNumberingProperties": {
+        "repr": "( )",
+        "items": [],
+        "type": ".beans.XPropertySet"
+    },
+    "getURL": {
+        "repr": "( )",
+        "items": [],
+        "type": "string"
+    },
+    "loadMetadataFromStorage": {
+        "repr": "( [in] com.sun.star.embed.XStorage Storage, [in] com.sun.star.rdf.XURI BaseURI, [in] com.sun.star.task.XInteractionHandler InteractionHandler, )",
+        "items": [],
+        "type": "void"
+    },
+    "getScriptProvider": {
+        "repr": "( )",
+        "items": [],
+        "type": ".script.provider.XScriptProvider"
+    },
+    "getPropertyStates": {
+        "repr": "( [in] []string aPropertyName, )",
+        "items": [],
+        "type": "[].beans.PropertyState"
+    },
+    "getDocumentIndexes": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XIndexAccess"
+    },
+    "checkOut": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "storeToStorage": {
+        "repr": "( [in] com.sun.star.embed.XStorage xStorage, [in] []com.sun.star.beans.PropertyValue aMediaDescriptor, )",
+        "items": [],
+        "type": "void"
+    },
+    "replaceAll": {
+        "repr": "( [in] com.sun.star.util.XSearchDescriptor xDesc, )",
+        "items": [],
+        "type": "long"
+    },
+    "getXForms": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XNameContainer"
+    },
+    "removeMetadataFile": {
+        "repr": "( [in] com.sun.star.rdf.XURI GraphName, )",
+        "items": [],
+        "type": "void"
+    },
+    "loadMetadataFromMedium": {
+        "repr": "( [in] []com.sun.star.beans.PropertyValue Medium, )",
+        "items": [],
+        "type": "void"
+    },
+    "createDefaultViewController": {
+        "repr": "( [in] com.sun.star.frame.XFrame Frame, )",
+        "items": [],
+        "type": ".frame.XController2"
+    },
+    "removePrintJobListener": {
+        "repr": "( [in] com.sun.star.view.XPrintJobListener xListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "findNext": {
+        "repr": "( [in] com.sun.star.uno.XInterface xStartAt, [in] com.sun.star.util.XSearchDescriptor xDesc, )",
+        "items": [],
+        "type": ".uno.XInterface"
+    },
+    "paintTile": {
+        "repr": "( [in] any Parent, [in] long nOutputWidth, [in] long nOutputHeight, [in] long nTilePosX, [in] long nTilePosY, [in] long nTileWidth, [in] long nTileHeight, )",
+        "items": [],
+        "type": "void"
+    },
+    "getViewData": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XIndexAccess"
+    },
+    "leaseNumber": {
+        "repr": "( [in] com.sun.star.uno.XInterface xComponent, )",
+        "items": [],
+        "type": "long"
+    },
+    "switchToStorage": {
+        "repr": "( [in] com.sun.star.embed.XStorage xStorage, )",
+        "items": [],
+        "type": "void"
+    },
+    "getDocumentSubStorage": {
+        "repr": "( [in] string StorageName, [in] long nMode, )",
+        "items": [],
+        "type": ".embed.XStorage"
+    },
+    "printPages": {
+        "repr": "( [in] []com.sun.star.beans.PropertyValue xOptions, )",
+        "items": [],
+        "type": "void"
+    },
+    "recoverFromFile": {
+        "repr": "( [in] string SourceLocation, [in] string SalvagedFile, [in] []com.sun.star.beans.PropertyValue MediaDescriptor, )",
+        "items": [],
+        "type": "void"
+    },
+    "getLocation": {
+        "repr": "( )",
+        "items": [],
+        "type": "string"
+    },
+    "getArgs": {
+        "repr": "( )",
+        "items": [],
+        "type": "[].beans.PropertyValue"
+    },
+    "addModule": {
+        "repr": "( [in] string LibraryName, [in] string ModuleName, [in] string Language, [in] string Source, )",
+        "items": [],
+        "type": "void"
+    },
+    "setPropertyValue": {
+        "repr": "( [in] string aPropertyName, [in] any aValue, )",
+        "items": [],
+        "type": "void"
+    },
+    "getVisualAreaSize": {
+        "repr": "( [in] hyper nAspect, )",
+        "items": [],
+        "type": ".awt.Size"
+    },
+    "render": {
+        "repr": "( [in] long nRenderer, [in] any aSelection, [in] []com.sun.star.beans.PropertyValue xOptions, )",
+        "items": [],
+        "type": "void"
+    },
+    "getFlatParagraphIterator": {
+        "repr": "( [in] long nType, [in] boolean bAutomatic, )",
+        "items": [],
+        "type": ".text.XFlatParagraphIterator"
+    },
+    "createInstanceWithArguments": {
+        "repr": "( [in] string ServiceSpecifier, [in] []any Arguments, )",
+        "items": [],
+        "type": ".uno.XInterface"
+    },
+    "getPreferredVisualRepresentation": {
+        "repr": "( [in] hyper nAspect, )",
+        "items": [],
+        "type": ".embed.VisualRepresentation"
+    },
+    "createInstance": {
+        "repr": "( [in] string aServiceSpecifier, )",
+        "items": [],
+        "type": ".uno.XInterface"
+    },
+    "getTransferData": {
+        "repr": "( [in] com.sun.star.datatransfer.DataFlavor aFlavor, )",
+        "items": [],
+        "type": "any"
+    },
+    "disableSetModified": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "addContentOrStylesFile": {
+        "repr": "( [in] string FileName, )",
+        "items": [],
+        "type": "void"
+    },
+    "getBookmarks": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XNameAccess"
+    },
+    "addEventListener": {
+        "repr": "( [in] com.sun.star.lang.XEventListener xListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "storeMetadataToStorage": {
+        "repr": "( [in] com.sun.star.embed.XStorage Storage, )",
+        "items": [],
+        "type": "void"
+    },
+    "removePropertyChangeListener": {
+        "repr": "( [in] string aPropertyName, [in] com.sun.star.beans.XPropertyChangeListener aListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "getChapterNumberingRules": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XIndexReplace"
+    },
+    "addPropertyChangeListener": {
+        "repr": "( [in] string aPropertyName, [in] com.sun.star.beans.XPropertyChangeListener xListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "getAvailableViewControllerNames": {
+        "repr": "( )",
+        "items": [],
+        "type": "[]string"
+    },
+    "close": {
+        "repr": "( [in] boolean DeliverOwnership, )",
+        "items": [],
+        "type": "void"
+    },
+    "getEmbeddedObjects": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XNameAccess"
+    },
+    "setDelegator": {
+        "repr": "( [in] com.sun.star.uno.XInterface pDelegator, )",
+        "items": [],
+        "type": "void"
+    },
+    "removeVetoableChangeListener": {
+        "repr": "( [in] string PropertyName, [in] com.sun.star.beans.XVetoableChangeListener aListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "queryAggregation": {
+        "repr": "( [in] type aType, )",
+        "items": [],
+        "type": "any"
+    },
+    "storeMetadataToMedium": {
+        "repr": "( [in] []com.sun.star.beans.PropertyValue Medium, )",
+        "items": [],
+        "type": "void"
+    },
+    "isDataFlavorSupported": {
+        "repr": "( [in] com.sun.star.datatransfer.DataFlavor aFlavor, )",
+        "items": [],
+        "type": "boolean"
+    },
+    "setVisualAreaSize": {
+        "repr": "( [in] hyper nAspect, [in] com.sun.star.awt.Size aSize, )",
+        "items": [],
+        "type": "void"
+    },
+    "getGraphicObjects": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XNameAccess"
+    },
+    "getUndoManager": {
+        "repr": "( )",
+        "items": [],
+        "type": ".document.XUndoManager"
+    },
+    "addModifyListener": {
+        "repr": "( [in] com.sun.star.util.XModifyListener aListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "createViewController": {
+        "repr": "( [in] string ViewName, [in] []com.sun.star.beans.PropertyValue Arguments, [in] com.sun.star.frame.XFrame Frame, )",
+        "items": [],
+        "type": ".frame.XController2"
+    },
+    "acquire": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "hasControllersLocked": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "getTextTables": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XNameAccess"
+    },
+    "removeCloseListener": {
+        "repr": "( [in] com.sun.star.util.XCloseListener Listener, )",
+        "items": [],
+        "type": "void"
+    },
+    "queryAdapter": {
+        "repr": "( )",
+        "items": [],
+        "type": ".uno.XAdapter"
+    },
+    "getElementByURI": {
+        "repr": "( [in] com.sun.star.rdf.XURI URI, )",
+        "items": [],
+        "type": ".rdf.XMetadatable"
+    },
+    "getDrawPages": {
+        "repr": "( )",
+        "items": [],
+        "type": ".drawing.XDrawPages"
+    },
+    "getFootnotes": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XIndexAccess"
+    },
+    "getImplementationName": {
+        "repr": "( )",
+        "items": [],
+        "type": "string"
+    },
+    "canCheckIn": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "getAvailableServiceNames": {
+        "repr": "( )",
+        "items": [],
+        "type": "[]string"
+    },
+    "releaseNumber": {
+        "repr": "( [in] long nNumber, )",
+        "items": [],
+        "type": "void"
+    },
+    "getTextSections": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XNameAccess"
+    },
+    "reformat": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "getNumberFormatSettings": {
+        "repr": "( )",
+        "items": [],
+        "type": ".beans.XPropertySet"
+    },
+    "refresh": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "isSetModifiedEnabled": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "getParent": {
+        "repr": "( )",
+        "items": [],
+        "type": ".uno.XInterface"
+    },
+    "getTextFieldMasters": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XNameAccess"
+    },
+    "setCurrentController": {
+        "repr": "( [in] com.sun.star.frame.XController Controller, )",
+        "items": [],
+        "type": "void"
+    },
+    "getElementByMetadataReference": {
+        "repr": "( [in] com.sun.star.beans.StringPair MetadataReference, )",
+        "items": [],
+        "type": ".rdf.XMetadatable"
+    },
+    "addStorageChangeListener": {
+        "repr": "( [in] com.sun.star.document.XStorageChangeListener xListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "removeDocumentEventListener": {
+        "repr": "( [in] com.sun.star.document.XDocumentEventListener Listener, )",
+        "items": [],
+        "type": "void"
+    },
+    "getNumberFormats": {
+        "repr": "( )",
+        "items": [],
+        "type": ".util.XNumberFormats"
     },
     "hasLocation": {
         "repr": "( )",
         "items": [],
         "type": "boolean"
     },
-    "getImplementationName": {
+    "supportsService": {
+        "repr": "( [in] string ServiceName, )",
+        "items": [],
+        "type": "boolean"
+    },
+    "setPagePrintSettings": {
+        "repr": "( [in] []com.sun.star.beans.PropertyValue aSettings, )",
+        "items": [],
+        "type": "void"
+    },
+    "releaseNumberForComponent": {
+        "repr": "( [in] com.sun.star.uno.XInterface xComponent, )",
+        "items": [],
+        "type": "void"
+    },
+    "getTextFrames": {
         "repr": "( )",
         "items": [],
-        "type": "string"
+        "type": ".container.XNameAccess"
+    },
+    "getEndnotes": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XIndexAccess"
+    },
+    "isVersionable": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "removeContentOrStylesFile": {
+        "repr": "( [in] string FileName, )",
+        "items": [],
+        "type": "void"
+    },
+    "addVetoableChangeListener": {
+        "repr": "( [in] string PropertyName, [in] com.sun.star.beans.XVetoableChangeListener aListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "addTitleChangeListener": {
+        "repr": "( [in] com.sun.star.frame.XTitleChangeListener xListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "enableSetModified": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "getMetadataGraphsWithType": {
+        "repr": "( [in] com.sun.star.rdf.XURI Type, )",
+        "items": [],
+        "type": "[].rdf.XURI"
+    },
+    "getMapUnit": {
+        "repr": "( [in] hyper nAspect, )",
+        "items": [],
+        "type": "long"
+    },
+    "addRefreshListener": {
+        "repr": "( [in] com.sun.star.util.XRefreshListener l, )",
+        "items": [],
+        "type": "void"
+    },
+    "getDrawPage": {
+        "repr": "( )",
+        "items": [],
+        "type": ".drawing.XDrawPage"
+    },
+    "print": {
+        "repr": "( [in] []com.sun.star.beans.PropertyValue xOptions, )",
+        "items": [],
+        "type": "void"
+    },
+    "findFirst": {
+        "repr": "( [in] com.sun.star.util.XSearchDescriptor xDesc, )",
+        "items": [],
+        "type": ".uno.XInterface"
+    },
+    "getTransferDataFlavors": {
+        "repr": "( )",
+        "items": [],
+        "type": "[].datatransfer.DataFlavor"
     },
     "getDocumentSubStoragesNames": {
         "repr": "( )",
@@ -104,117 +724,92 @@
         "items": [],
         "type": "void"
     },
-    "getEmbeddedObjects": {
-        "repr": "( )",
+    "getRendererCount": {
+        "repr": "( [in] any aSelection, [in] []com.sun.star.beans.PropertyValue xOptions, )",
         "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "reformat": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "lockControllers": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "storeToURL": {
-        "repr": "( [in] string sURL, [in] []com.sun.star.beans.PropertyValue lArguments, )",
-        "items": [],
-        "type": "void"
-    },
-    "createReplaceDescriptor": {
-        "repr": "( )",
-        "items": [],
-        "type": ".util.XReplaceDescriptor"
-    },
-    "setDelegator": {
-        "repr": "( [in] com.sun.star.uno.XInterface pDelegator, )",
-        "items": [],
-        "type": "void"
+        "type": "long"
     },
     "createClone": {
         "repr": "( )",
         "items": [],
         "type": ".util.XCloneable"
     },
-    "getRedlines": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XEnumerationAccess"
-    },
-    "getTypes": {
-        "repr": "( )",
-        "items": [],
-        "type": "[]type"
-    },
-    "getAvailableServiceNames": {
-        "repr": "( )",
-        "items": [],
-        "type": "[]string"
-    },
-    "getTextFieldMasters": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "setTitle": {
-        "repr": "( [in] string sTitle, )",
+    "storeAsURL": {
+        "repr": "( [in] string sURL, [in] []com.sun.star.beans.PropertyValue lArguments, )",
         "items": [],
         "type": "void"
     },
-    "storeMetadataToMedium": {
-        "repr": "( [in] []com.sun.star.beans.PropertyValue Medium, )",
+    "getEndnoteSettings": {
+        "repr": "( )",
+        "items": [],
+        "type": ".beans.XPropertySet"
+    },
+    "getEvents": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XNameReplace"
+    },
+    "getCurrentController": {
+        "repr": "( )",
+        "items": [],
+        "type": ".frame.XController"
+    },
+    "addPrintJobListener": {
+        "repr": "( [in] com.sun.star.view.XPrintJobListener xListener, )",
         "items": [],
         "type": "void"
     },
-    "getXForms": {
+    "getText": {
         "repr": "( )",
         "items": [],
-        "type": ".container.XNameContainer"
+        "type": ".text.XText"
     },
-    "getPagePrintSettings": {
+    "removeEventListener": {
+        "repr": "( [in] com.sun.star.lang.XEventListener aListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "updateLinks": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "getPrinter": {
         "repr": "( )",
         "items": [],
         "type": "[].beans.PropertyValue"
     },
-    "getTextFields": {
+    "unlockControllers": {
         "repr": "( )",
-        "items": [],
-        "type": ".container.XEnumerationAccess"
-    },
-    "setIdentifier": {
-        "repr": "( [in] string Identifier, )",
         "items": [],
         "type": "void"
     },
-    "getVisualAreaSize": {
-        "repr": "( [in] hyper nAspect, )",
-        "items": [],
-        "type": ".awt.Size"
-    },
-    "canCheckIn": {
+    "getRedlines": {
         "repr": "( )",
         "items": [],
-        "type": "boolean"
-    },
-    "getUntitledPrefix": {
-        "repr": "( )",
-        "items": [],
-        "type": "string"
+        "type": ".container.XEnumerationAccess"
     },
     "getDocumentStorage": {
         "repr": "( )",
         "items": [],
         "type": ".embed.XStorage"
     },
-    "getPropertyValue": {
-        "repr": "( [in] string PropertyName, )",
+    "getStyleFamilies": {
+        "repr": "( )",
         "items": [],
-        "type": "any"
+        "type": ".container.XNameAccess"
     },
-    "disconnectController": {
+    "getDocumentProperties": {
+        "repr": "( )",
+        "items": [],
+        "type": ".document.XDocumentProperties"
+    },
+    "findAll": {
+        "repr": "( [in] com.sun.star.util.XSearchDescriptor xDesc, )",
+        "items": [],
+        "type": ".container.XIndexAccess"
+    },
+    "connectController": {
         "repr": "( [in] com.sun.star.frame.XController Controller, )",
         "items": [],
         "type": "void"
@@ -224,353 +819,83 @@
         "items": [],
         "type": "boolean"
     },
-    "createInstanceWithArguments": {
-        "repr": "( [in] string ServiceSpecifier, [in] []any Arguments, )",
-        "items": [],
-        "type": ".uno.XInterface"
-    },
-    "getDrawPage": {
+    "getLinks": {
         "repr": "( )",
         "items": [],
-        "type": ".drawing.XDrawPage"
+        "type": ".container.XNameAccess"
     },
-    "addStorageChangeListener": {
-        "repr": "( [in] com.sun.star.document.XStorageChangeListener xListener, )",
+    "getControllers": {
+        "repr": "( )",
+        "items": [],
+        "type": ".container.XEnumeration"
+    },
+    "notifyDocumentEvent": {
+        "repr": "( [in] string EventName, [in] com.sun.star.frame.XController2 ViewController, [in] any Supplement, )",
         "items": [],
         "type": "void"
     },
-    "getFootnoteSettings": {
+    "createReplaceDescriptor": {
         "repr": "( )",
         "items": [],
-        "type": ".beans.XPropertySet"
+        "type": ".util.XReplaceDescriptor"
+    },
+    "removeTitleChangeListener": {
+        "repr": "( [in] com.sun.star.frame.XTitleChangeListener xListener, )",
+        "items": [],
+        "type": "void"
+    },
+    "setIdentifier": {
+        "repr": "( [in] string Identifier, )",
+        "items": [],
+        "type": "void"
+    },
+    "getImplementationId": {
+        "repr": "( )",
+        "items": [],
+        "type": "[]byte"
     },
     "getLibraryContainer": {
         "repr": "( )",
         "items": [],
         "type": ".container.XNameContainer"
     },
-    "updateCmisProperties": {
-        "repr": "( [in] []com.sun.star.document.CmisProperty cmisProperties, )",
-        "items": [],
-        "type": "void"
-    },
-    "isReadonly": {
+    "getTypes": {
         "repr": "( )",
         "items": [],
-        "type": "boolean"
+        "type": "[]type"
     },
-    "getDocumentIndexes": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XIndexAccess"
-    },
-    "paintTile": {
-        "repr": "( [in] any Parent, [in] long nOutputWidth, [in] long nOutputHeight, [in] long nTilePosX, [in] long nTilePosY, [in] long nTileWidth, [in] long nTileHeight, )",
-        "items": [],
-        "type": "void"
-    },
-    "getFootnotes": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XIndexAccess"
-    },
-    "getURL": {
-        "repr": "( )",
-        "items": [],
-        "type": "string"
-    },
-    "getMetadataGraphsWithType": {
-        "repr": "( [in] com.sun.star.rdf.XURI Type, )",
-        "items": [],
-        "type": "[].rdf.XURI"
-    },
-    "getViewData": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XIndexAccess"
-    },
-    "hasControllersLocked": {
-        "repr": "( )",
-        "items": [],
-        "type": "boolean"
-    },
-    "findNext": {
-        "repr": "( [in] com.sun.star.uno.XInterface xStartAt, [in] com.sun.star.util.XSearchDescriptor xDesc, )",
-        "items": [],
-        "type": ".uno.XInterface"
-    },
-    "removeContentOrStylesFile": {
-        "repr": "( [in] string FileName, )",
-        "items": [],
-        "type": "void"
-    },
-    "addPropertyChangeListener": {
-        "repr": "( [in] string aPropertyName, [in] com.sun.star.beans.XPropertyChangeListener xListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "addModule": {
-        "repr": "( [in] string LibraryName, [in] string ModuleName, [in] string Language, [in] string Source, )",
-        "items": [],
-        "type": "void"
-    },
-    "addRefreshListener": {
-        "repr": "( [in] com.sun.star.util.XRefreshListener l, )",
-        "items": [],
-        "type": "void"
-    },
-    "connectController": {
-        "repr": "( [in] com.sun.star.frame.XController Controller, )",
-        "items": [],
-        "type": "void"
-    },
-    "isModified": {
-        "repr": "( )",
-        "items": [],
-        "type": "boolean"
-    },
-    "getRendererCount": {
-        "repr": "( [in] any aSelection, [in] []com.sun.star.beans.PropertyValue xOptions, )",
-        "items": [],
-        "type": "long"
-    },
-    "getMapUnit": {
-        "repr": "( [in] hyper nAspect, )",
-        "items": [],
-        "type": "long"
-    },
-    "getAvailableViewControllerNames": {
-        "repr": "( )",
-        "items": [],
-        "type": "[]string"
-    },
-    "getUIConfigurationManager": {
-        "repr": "( )",
-        "items": [],
-        "type": ".ui.XUIConfigurationManager"
-    },
-    "supportsService": {
-        "repr": "( [in] string ServiceName, )",
-        "items": [],
-        "type": "boolean"
-    },
-    "loadFromStorage": {
-        "repr": "( [in] com.sun.star.embed.XStorage xStorage, [in] []com.sun.star.beans.PropertyValue aMediaDescriptor, )",
-        "items": [],
-        "type": "void"
-    },
-    "initNew": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "queryInterface": {
-        "repr": "( [in] type aType, )",
+    "getPropertyValue": {
+        "repr": "( [in] string PropertyName, )",
         "items": [],
         "type": "any"
-    },
-    "removeModifyListener": {
-        "repr": "( [in] com.sun.star.util.XModifyListener aListener, )",
-        "items": [],
-        "type": "void"
     },
     "createSearchDescriptor": {
         "repr": "( )",
         "items": [],
         "type": ".util.XSearchDescriptor"
     },
-    "getNumberingRules": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XIndexAccess"
-    },
-    "setViewData": {
-        "repr": "( [in] com.sun.star.container.XIndexAccess Data, )",
-        "items": [],
-        "type": "void"
-    },
-    "getPreferredVisualRepresentation": {
-        "repr": "( [in] hyper nAspect, )",
-        "items": [],
-        "type": ".embed.VisualRepresentation"
-    },
-    "getEndnotes": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XIndexAccess"
-    },
-    "store": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "queryAdapter": {
-        "repr": "( )",
-        "items": [],
-        "type": ".uno.XAdapter"
-    },
-    "getPrinter": {
-        "repr": "( )",
-        "items": [],
-        "type": "[].beans.PropertyValue"
-    },
-    "getChapterNumberingRules": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XIndexReplace"
-    },
-    "getPropertySetInfo": {
-        "repr": "( )",
-        "items": [],
-        "type": ".beans.XPropertySetInfo"
-    },
-    "removeStorageChangeListener": {
-        "repr": "( [in] com.sun.star.document.XStorageChangeListener xListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "loadMetadataFromMedium": {
-        "repr": "( [in] []com.sun.star.beans.PropertyValue Medium, )",
-        "items": [],
-        "type": "void"
-    },
-    "getDocumentSubStorage": {
-        "repr": "( [in] string StorageName, [in] long nMode, )",
-        "items": [],
-        "type": ".embed.XStorage"
-    },
-    "removeRefreshListener": {
-        "repr": "( [in] com.sun.star.util.XRefreshListener l, )",
-        "items": [],
-        "type": "void"
-    },
-    "importMetadataFile": {
-        "repr": "( [in] short Format, [in] com.sun.star.io.XInputStream InStream, [in] string FileName, [in] com.sun.star.rdf.XURI BaseURI, [in] []com.sun.star.rdf.XURI Types, )",
-        "items": [],
-        "type": ".rdf.XURI"
-    },
-    "addTitleChangeListener": {
-        "repr": "( [in] com.sun.star.frame.XTitleChangeListener xListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "removePrintJobListener": {
-        "repr": "( [in] com.sun.star.view.XPrintJobListener xListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "setModified": {
-        "repr": "( [in] boolean bModified, )",
-        "items": [],
-        "type": "void"
-    },
-    "getBookmarks": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "getElementByMetadataReference": {
-        "repr": "( [in] com.sun.star.beans.StringPair MetadataReference, )",
-        "items": [],
-        "type": ".rdf.XMetadatable"
-    },
     "getTitle": {
         "repr": "( )",
         "items": [],
         "type": "string"
     },
-    "getElementByURI": {
-        "repr": "( [in] com.sun.star.rdf.XURI URI, )",
-        "items": [],
-        "type": ".rdf.XMetadatable"
-    },
-    "getStyleFamilies": {
+    "getReferenceMarks": {
         "repr": "( )",
         "items": [],
         "type": ".container.XNameAccess"
     },
-    "getEvents": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameReplace"
-    },
-    "print": {
-        "repr": "( [in] []com.sun.star.beans.PropertyValue xOptions, )",
+    "setPropertyToDefault": {
+        "repr": "( [in] string PropertyName, )",
         "items": [],
         "type": "void"
     },
-    "removeEventListener": {
-        "repr": "( [in] com.sun.star.lang.XEventListener aListener, )",
+    "getRenderer": {
+        "repr": "( [in] long nRenderer, [in] any aSelection, [in] []com.sun.star.beans.PropertyValue xOptions, )",
         "items": [],
-        "type": "void"
+        "type": "[].beans.PropertyValue"
     },
-    "getScriptProvider": {
-        "repr": "( )",
-        "items": [],
-        "type": ".script.provider.XScriptProvider"
-    },
-    "removeCloseListener": {
-        "repr": "( [in] com.sun.star.util.XCloseListener Listener, )",
-        "items": [],
-        "type": "void"
-    },
-    "addCloseListener": {
-        "repr": "( [in] com.sun.star.util.XCloseListener Listener, )",
-        "items": [],
-        "type": "void"
-    },
-    "removeMetadataFile": {
-        "repr": "( [in] com.sun.star.rdf.XURI GraphName, )",
-        "items": [],
-        "type": "void"
-    },
-    "isDataFlavorSupported": {
-        "repr": "( [in] com.sun.star.datatransfer.DataFlavor aFlavor, )",
-        "items": [],
-        "type": "boolean"
-    },
-    "getDrawPages": {
-        "repr": "( )",
-        "items": [],
-        "type": ".drawing.XDrawPages"
-    },
-    "getTransferDataFlavors": {
-        "repr": "( )",
-        "items": [],
-        "type": "[].datatransfer.DataFlavor"
-    },
-    "checkOut": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "getCurrentController": {
-        "repr": "( )",
-        "items": [],
-        "type": ".frame.XController"
-    },
-    "getUndoManager": {
-        "repr": "( )",
-        "items": [],
-        "type": ".document.XUndoManager"
-    },
-    "getDocumentProperties": {
-        "repr": "( )",
-        "items": [],
-        "type": ".document.XDocumentProperties"
-    },
-    "createLibrary": {
-        "repr": "( [in] string LibName, [in] string Password, [in] string ExternalSourceURL, [in] string LinkTargetURL, )",
-        "items": [],
-        "type": "void"
-    },
-    "getLocation": {
-        "repr": "( )",
-        "items": [],
-        "type": "string"
-    },
-    "setVisualAreaSize": {
-        "repr": "( [in] hyper nAspect, [in] com.sun.star.awt.Size aSize, )",
+    "setModified": {
+        "repr": "( [in] boolean bModified, )",
         "items": [],
         "type": "void"
     },
@@ -583,338 +908,13 @@
         ],
         "type": "[]string"
     },
-    "load": {
-        "repr": "( [in] []com.sun.star.beans.PropertyValue lArguments, )",
-        "items": [],
-        "type": "void"
-    },
-    "getAllVersions": {
-        "repr": "( )",
-        "items": [],
-        "type": "[].document.CmisVersion"
-    },
-    "getLineNumberingProperties": {
-        "repr": "( )",
-        "items": [],
-        "type": ".beans.XPropertySet"
-    },
-    "getFlatParagraphIterator": {
-        "repr": "( [in] long nType, [in] boolean bAutomatic, )",
-        "items": [],
-        "type": ".text.XFlatParagraphIterator"
-    },
-    "getPropertyStates": {
-        "repr": "( [in] []string aPropertyName, )",
-        "items": [],
-        "type": "[].beans.PropertyState"
-    },
-    "replaceAll": {
-        "repr": "( [in] com.sun.star.util.XSearchDescriptor xDesc, )",
-        "items": [],
-        "type": "long"
-    },
-    "addDocumentEventListener": {
-        "repr": "( [in] com.sun.star.document.XDocumentEventListener Listener, )",
-        "items": [],
-        "type": "void"
-    },
-    "getNumberFormats": {
-        "repr": "( )",
-        "items": [],
-        "type": ".util.XNumberFormats"
-    },
-    "getCurrentSelection": {
-        "repr": "( )",
-        "items": [],
-        "type": ".uno.XInterface"
-    },
-    "findAll": {
-        "repr": "( [in] com.sun.star.util.XSearchDescriptor xDesc, )",
-        "items": [],
-        "type": ".container.XIndexAccess"
-    },
-    "storeToStorage": {
-        "repr": "( [in] com.sun.star.embed.XStorage xStorage, [in] []com.sun.star.beans.PropertyValue aMediaDescriptor, )",
-        "items": [],
-        "type": "void"
-    },
-    "setCurrentController": {
-        "repr": "( [in] com.sun.star.frame.XController Controller, )",
-        "items": [],
-        "type": "void"
-    },
-    "attachResource": {
-        "repr": "( [in] string URL, [in] []com.sun.star.beans.PropertyValue Arguments, )",
-        "items": [],
-        "type": "boolean"
-    },
-    "addMetadataFile": {
-        "repr": "( [in] string FileName, [in] []com.sun.star.rdf.XURI Types, )",
-        "items": [],
-        "type": ".rdf.XURI"
-    },
-    "printPages": {
-        "repr": "( [in] []com.sun.star.beans.PropertyValue xOptions, )",
-        "items": [],
-        "type": "void"
-    },
-    "acquire": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "getParent": {
-        "repr": "( )",
-        "items": [],
-        "type": ".uno.XInterface"
-    },
-    "getEndnoteSettings": {
-        "repr": "( )",
-        "items": [],
-        "type": ".beans.XPropertySet"
-    },
-    "queryAggregation": {
-        "repr": "( [in] type aType, )",
-        "items": [],
-        "type": "any"
-    },
-    "leaseNumber": {
-        "repr": "( [in] com.sun.star.uno.XInterface xComponent, )",
-        "items": [],
-        "type": "long"
-    },
-    "addEventListener": {
-        "repr": "( [in] com.sun.star.lang.XEventListener xListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "getAutoStyles": {
-        "repr": "( )",
-        "items": [],
-        "type": ".style.XAutoStyles"
-    },
-    "notifyDocumentEvent": {
-        "repr": "( [in] string EventName, [in] com.sun.star.frame.XController2 ViewController, [in] any Supplement, )",
-        "items": [],
-        "type": "void"
-    },
-    "releaseNumber": {
-        "repr": "( [in] long nNumber, )",
-        "items": [],
-        "type": "void"
-    },
-    "release": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "storeSelf": {
-        "repr": "( [in] []com.sun.star.beans.PropertyValue lArguments, )",
-        "items": [],
-        "type": "void"
-    },
-    "enableSetModified": {
-        "repr": "( )",
-        "items": [],
-        "type": "boolean"
-    },
-    "getPropertyState": {
-        "repr": "( [in] string PropertyName, )",
-        "items": [],
-        "type": ".beans.PropertyState"
-    },
-    "isVersionable": {
-        "repr": "( )",
-        "items": [],
-        "type": "boolean"
-    },
-    "getTransferData": {
-        "repr": "( [in] com.sun.star.datatransfer.DataFlavor aFlavor, )",
-        "items": [],
-        "type": "any"
-    },
-    "disableSetModified": {
-        "repr": "( )",
-        "items": [],
-        "type": "boolean"
-    },
-    "switchToStorage": {
-        "repr": "( [in] com.sun.star.embed.XStorage xStorage, )",
-        "items": [],
-        "type": "void"
-    },
-    "recoverFromFile": {
-        "repr": "( [in] string SourceLocation, [in] string SalvagedFile, [in] []com.sun.star.beans.PropertyValue MediaDescriptor, )",
-        "items": [],
-        "type": "void"
-    },
-    "createDefaultViewController": {
-        "repr": "( [in] com.sun.star.frame.XFrame Frame, )",
-        "items": [],
-        "type": ".frame.XController2"
-    },
-    "addContentOrStylesFile": {
-        "repr": "( [in] string FileName, )",
-        "items": [],
-        "type": "void"
-    },
-    "removeVetoableChangeListener": {
-        "repr": "( [in] string PropertyName, [in] com.sun.star.beans.XVetoableChangeListener aListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "setPropertyValue": {
-        "repr": "( [in] string aPropertyName, [in] any aValue, )",
-        "items": [],
-        "type": "void"
-    },
     "checkIn": {
         "repr": "( [in] boolean isMajor, [in] string comment, )",
         "items": [],
         "type": "void"
     },
-    "cancelCheckOut": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "getTextSections": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "getDocumentLanguages": {
-        "repr": "( [in] short nScriptTypes, [in] short nCount, )",
-        "items": [],
-        "type": "[].lang.Locale"
-    },
-    "createInstance": {
-        "repr": "( [in] string aServiceSpecifier, )",
-        "items": [],
-        "type": ".uno.XInterface"
-    },
-    "getSomething": {
-        "repr": "( [in] []byte aIdentifier, )",
-        "items": [],
-        "type": "hyper"
-    },
-    "removeTitleChangeListener": {
-        "repr": "( [in] com.sun.star.frame.XTitleChangeListener xListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "getArgs": {
-        "repr": "( )",
-        "items": [],
-        "type": "[].beans.PropertyValue"
-    },
-    "findFirst": {
-        "repr": "( [in] com.sun.star.util.XSearchDescriptor xDesc, )",
-        "items": [],
-        "type": ".uno.XInterface"
-    },
-    "getNumberFormatSettings": {
-        "repr": "( )",
-        "items": [],
-        "type": ".beans.XPropertySet"
-    },
-    "getText": {
-        "repr": "( )",
-        "items": [],
-        "type": ".text.XText"
-    },
-    "removeDocumentEventListener": {
-        "repr": "( [in] com.sun.star.document.XDocumentEventListener Listener, )",
-        "items": [],
-        "type": "void"
-    },
-    "getRDFRepository": {
-        "repr": "( )",
-        "items": [],
-        "type": ".rdf.XRepository"
-    },
-    "removePropertyChangeListener": {
-        "repr": "( [in] string aPropertyName, [in] com.sun.star.beans.XPropertyChangeListener aListener, )",
-        "items": [],
-        "type": "void"
-    },
-    "setPropertyToDefault": {
-        "repr": "( [in] string PropertyName, )",
-        "items": [],
-        "type": "void"
-    },
-    "getGraphicObjects": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "getControllers": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XEnumeration"
-    },
-    "getTextTables": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "createViewController": {
-        "repr": "( [in] string ViewName, [in] []com.sun.star.beans.PropertyValue Arguments, [in] com.sun.star.frame.XFrame Frame, )",
-        "items": [],
-        "type": ".frame.XController2"
-    },
-    "storeMetadataToStorage": {
-        "repr": "( [in] com.sun.star.embed.XStorage Storage, )",
-        "items": [],
-        "type": "void"
-    },
-    "unlockControllers": {
-        "repr": "( )",
-        "items": [],
-        "type": "void"
-    },
-    "setParent": {
-        "repr": "( [in] com.sun.star.uno.XInterface Parent, )",
-        "items": [],
-        "type": "void"
-    },
-    "wasModifiedSinceLastSave": {
-        "repr": "( )",
-        "items": [],
-        "type": "boolean"
-    },
-    "getTextFrames": {
-        "repr": "( )",
-        "items": [],
-        "type": ".container.XNameAccess"
-    },
-    "releaseNumberForComponent": {
-        "repr": "( [in] com.sun.star.uno.XInterface xComponent, )",
-        "items": [],
-        "type": "void"
-    },
-    "setPagePrintSettings": {
-        "repr": "( [in] []com.sun.star.beans.PropertyValue aSettings, )",
-        "items": [],
-        "type": "void"
-    },
-    "isSetModifiedEnabled": {
-        "repr": "( )",
-        "items": [],
-        "type": "boolean"
-    },
-    "loadMetadataFromStorage": {
-        "repr": "( [in] com.sun.star.embed.XStorage Storage, [in] com.sun.star.rdf.XURI BaseURI, [in] com.sun.star.task.XInteractionHandler InteractionHandler, )",
-        "items": [],
-        "type": "void"
-    },
-    "getRenderer": {
-        "repr": "( [in] long nRenderer, [in] any aSelection, [in] []com.sun.star.beans.PropertyValue xOptions, )",
-        "items": [],
-        "type": "[].beans.PropertyValue"
-    },
-    "addDialog": {
-        "repr": "( [in] string LibraryName, [in] string DialogName, [in] []byte Data, )",
+    "storeToURL": {
+        "repr": "( [in] string sURL, [in] []com.sun.star.beans.PropertyValue lArguments, )",
         "items": [],
         "type": "void"
     }

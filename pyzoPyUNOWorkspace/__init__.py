@@ -524,13 +524,16 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.parent()._desc_all_items.setText(str(len(rows)))
         self.parent()._desc_counter.setText("0")
 
+        # TODO: improve web parser
         try:
             res = ''
             n = 0
             for sig, desc in rows:
+                sig = sig.replace('&newline&', '\n')
                 sig = sig.replace('raises', '\nraises')
-                sig = sig.replace('set \nraises', '\nset raises')
-                sig = sig.replace('get \nraises', '\nget raises')
+                sig = sig.replace('set \nraises', 'set raises')
+                sig = sig.replace('get \nraises', 'get raises')
+                sig = sig.strip()
 
                 desc = desc.replace('&newline&&newline&', '&newline&')
                 desc = desc.replace('&newline&', '\n')
@@ -538,7 +541,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 desc = desc.replace('Returnssequence', 'Returns sequence')
                 desc = desc.replace('Returnsthe', 'Returns the')
                 desc = desc.replace('Returnsa', 'Returns a')
-                # desc = desc.replace('Parameters','\nParameters')
 
                 res = sig + '\n' + desc + '-' * 80
 
