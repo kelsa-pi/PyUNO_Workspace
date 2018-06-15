@@ -677,7 +677,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_4.addWidget(self._info_label, 0)
         layout_4.addWidget(self._impl_name, 1)
         layout_4.addWidget(self._option_label, 0)
-        ## layout_4.addWidget(self._dash, 0)
         layout_4.addWidget(self._option_save, 0)
         
         # Main Layout
