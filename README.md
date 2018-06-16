@@ -13,25 +13,19 @@ PyUNO Workspace is a modified version of Pyzo IDE Workspace plugin, designed for
 * display methods with arguments description
 * set arguments for methods to drill down
 * iterate over UNO enumerations
-* for examined objects
+* for examined objects:
+  * read API Reference
   * find code examples
   * find code snippets
 * generate code snippet
 * and more:
   * template for macros or custom scripts
-  * search LibreOffice UNO API documentation ([UNO2Dash](https://github.com/kelsa-pi/UNO2Dash) required)
-  
 
 ## Requirements
 
-[Pyzo IDE](https://github.com/pyzo/pyzo) - Runs on Python3 and needs Pyside or PyQt4 or PyQt5. There is [binaries](http://www.pyzo.org/start.html) for Windows, Linux and OS X and installation instructions [here](http://www.pyzo.org/install.html#install) 
+To get started working with PyUNO Workspace and Pyzo, you’ll need to have access to the Python 3 interpreter (not LibreOffice one). 
 
-**Optional (recommended)**
-
-Dash-like offline documentation browser
-
-[UNO2Dash](https://github.com/kelsa-pi/UNO2Dash) - Generate UNO docset for Dash 
-
+[Pyzo IDE](https://github.com/pyzo/pyzo) - Runs on Python3 and needs PySide/PySide2/PyQt4/PyQt5. One can install Pyzo with `python3 -m pip install pyzo`. There is [binaries](http://www.pyzo.org/start.html) for Windows, Linux and OS X and installation instructions [here](http://www.pyzo.org/install.html#install) 
 
 ## Installation and usage
 
