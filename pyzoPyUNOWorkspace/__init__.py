@@ -401,6 +401,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.parent()._enumerate.setEnabled(False)
         self.parent()._element_names.setEnabled(False)
         self.parent()._element_index.setEnabled(False)
+        self.parent()._impl_name.setText("")
     
     def fillWidget(self):
         """ fillWidget
