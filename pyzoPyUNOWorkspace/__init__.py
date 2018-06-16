@@ -695,12 +695,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._impl_name.setStyleSheet("QLabel { background:#ddd; }")
 
         # General Option
-        self._option_label = QtWidgets.QLabel(self)
-        self._option_label.setText(" Options: ")
-        #
-        self._option_save = QtWidgets.QToolButton(self)
-        self._option_save.setText("Save")
-        self._option_save.setToolTip("Save all options")
+        # self._option_label = QtWidgets.QLabel(self)
+        # self._option_label.setText(" Options: ")
+        # #
+        # self._option_save = QtWidgets.QToolButton(self)
+        # self._option_save.setText("Save")
+        # self._option_save.setToolTip("Save all options")
 
         # ----- Layout 5 -----
         # Create Back button
@@ -764,8 +764,8 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_4.addWidget(self._argument_line, 1)
         layout_4.addWidget(self._info_label, 0)
         layout_4.addWidget(self._impl_name, 1)
-        layout_4.addWidget(self._option_label, 0)
-        layout_4.addWidget(self._option_save, 0)
+        # layout_4.addWidget(self._option_label, 0)
+        # layout_4.addWidget(self._option_save, 0)
 
         # Layout 5: Help navigation layout
         layout_5 = QtWidgets.QHBoxLayout()
@@ -812,7 +812,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._help_back.pressed.connect(self.onBackPress)
         self._help_forward.pressed.connect(self.onForwardPress)
         #
-        self._option_save.pressed.connect(self.onSaveOptionsInConf)
+        # self._option_save.pressed.connect(self.onSaveOptionsInConf)
 
     # ---------------------------- 
     #           EVENTS
@@ -1008,11 +1008,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # Update
         self._tree.fillWorkspace()
     
-    def onSaveOptionsInConf(self):
-        """ Save options in configuration file. """
-        
-        config.set('GENERAL', 'dash', str(self._dash.isChecked()))
-  
-        with open(conf_file, 'w') as configfile:
-            config.write(configfile)
+    # def onSaveOptionsInConf(self):
+    #     """ Save options in configuration file. """
+    #
+    #     config.set('GENERAL', 'dash', str(self._dash.isChecked()))
+    #
+    #     with open(conf_file, 'w') as configfile:
+    #         config.write(configfile)
 
