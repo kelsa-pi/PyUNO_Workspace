@@ -361,6 +361,8 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             
             self.parent().onRefreshPress()
 
+        # ------- End PyUNO ----------------
+
         elif 'Delete' in req:
             # Delete the variable
             if shell:
@@ -509,7 +511,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
     def onItemClicked(self):
         """ onItemClicked()
-        When item clicked in the workspace tree show help
+        If item clicked in the workspace tree show help
         """
 
         self.parent()._description.clear()
@@ -531,7 +533,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         # TODO: improve web parser
         try:
             res = ''
-            n = 0
             for sig, desc in rows:
                 sig = sig.replace('&newline&', '\n')
                 sig = sig.replace('raises', '\nraises')
@@ -549,7 +550,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 res = sig + '\n' + desc + '-' * 80
 
                 self.parent()._description.addItem(res)
-                # n=+1
 
         except:
             pass
@@ -581,6 +581,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
                 fl.write('{}')
         
         style = QtWidgets.qApp.style()
+
         # ----- Layout 1 -----
         
         # Create Home tool button
@@ -702,26 +703,28 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._option_save.setToolTip("Save all options")
 
         # ----- Layout 5 -----
+        # Create Back button
         self._help_back = QtWidgets.QToolButton(self)
         self._help_back.setIcon(style.standardIcon(style.SP_ArrowLeft))
         self._help_back.setIconSize(QtCore.QSize(16, 16))
         self._help_back.setToolTip("Go back")
-        #
+        # Create Forward button
         self._help_forward = QtWidgets.QToolButton(self)
         self._help_forward.setIcon(style.standardIcon(style.SP_ArrowRight))
         self._help_forward.setIconSize(QtCore.QSize(16, 16))
         self._help_forward.setToolTip("Go forward")
-        #
+        # Create counter
         self._desc_counter = QtWidgets.QLabel(self)
         self._desc_counter.setText("0")
-        #
+        # Label
         self._desc_of = QtWidgets.QLabel(self)
         self._desc_of.setText(" of ")
-        #
+        # Create all items counter
         self._desc_all_items = QtWidgets.QLabel(self)
         self._desc_all_items.setText("0")
 
         # ----- Layout 6 -----
+
         self._description = QtWidgets.QListWidget(self)
         self._description.setWordWrap(True)
         self._description.setAutoFillBackground(True)
@@ -740,7 +743,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_1.addWidget(self._enumerate, 0)
         layout_1.addWidget(self._insert_code, 0)
         
-        # Layout 2: Argument and option layout
+        # Layout 2: Display, arguments, history and option layout
         layout_2 = QtWidgets.QHBoxLayout()
         layout_2.addWidget(self._all, 0)
         layout_2.addWidget(self._only_p, 0)
@@ -952,6 +955,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._history.addItems(new_list)
 
     def onForwardPress(self):
+        """Show next API reference"""
         all_items = self._desc_all_items.text()
 
         row = self._description.currentRow()
@@ -964,8 +968,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             self._desc_counter.setText(str(counter + 1))
 
     def onBackPress(self):
-        all_items = self._desc_all_items.text()
-
+        """Show previous  API reference"""
         row = self._description.currentRow()
         counter = row - 1
         self._description.setCurrentRow(counter)
