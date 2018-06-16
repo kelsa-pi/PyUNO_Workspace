@@ -31,6 +31,11 @@ conf_file = os.path.join(WORKSPACE_DIR, 'config.ini')
 config = configparser.ConfigParser()
 config.read(conf_file)
 
+FORUM_PATH = config.get('GENERAL', 'forum_path')
+FORUM_SUFIX = config.get('GENERAL', 'forum_sufix')
+SNIPPET_PATH = config.get('GENERAL', 'snippet_path')
+SNIPPET_SUFIX = config.get('GENERAL', 'snippet_sufix')
+
 # JSON serialization paths
 RESULTFILE = 'result.txt'
 
@@ -330,12 +335,12 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         elif 'Search in forum' in req:
             # Search in forum
-            url = 'https://forum.openoffice.org/en/forum/search.php?keywords=' + search + '&fid[0]=20'
+            url = FORUM_PATH + search + FORUM_SUFIX
             webbrowser.open(url)
 
         elif 'Search in snippets' in req:
             # Search in forum snippets
-            url = 'https://forum.openoffice.org/en/forum/search.php?keywords=' + search + '&fid[0]=21'
+            url = SNIPPET_PATH + search + SNIPPET_SUFIX
             webbrowser.open(url)
 
         elif 'Check' in req:
