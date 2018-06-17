@@ -29,7 +29,9 @@ To get started working with PyUNO Workspace and Pyzo, you’ll need to have acce
 
 ## Installation and usage
 
-For information see [documenation](https://github.com/kelsa-pi/PyUNO_Workspace/wiki) 
+Copy pyzoPyUNOWorkspace directory from this repo to INSTALL_PATH/pyzo/tools directory.
+
+For more information see [documenation](https://github.com/kelsa-pi/PyUNO_Workspace/wiki) 
 
 ## License
 BSD
