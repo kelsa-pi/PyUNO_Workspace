@@ -5,6 +5,7 @@ import uno
 
 
 def MyMacro(*args):
+    """Write Helo World in Writer"""
 
     try:
         ctx = remote_ctx                   # use in development
