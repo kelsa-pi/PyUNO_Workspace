@@ -12,24 +12,23 @@ from .utils import splitName, splitNameCleaner, joinName
 # Constants
 WORKSPACE_INIT = os.path.abspath(getsourcefile(lambda: 0))
 WORKSPACE_DIR = os.path.dirname(WORKSPACE_INIT)
+CONF_FILE = os.path.join(WORKSPACE_DIR, 'config.ini')
+UNODOC_DB = os.path.join(WORKSPACE_DIR, 'unoDoc.db')
 
 # Read configuration
-conf_file = os.path.join(WORKSPACE_DIR, 'config.ini')
 config = configparser.ConfigParser()
-config.read(conf_file)
+config.read(CONF_FILE)
 
 FORUM_PATH = config.get('GENERAL', 'forum_path')
 FORUM_SUFIX = config.get('GENERAL', 'forum_sufix')
 SNIPPET_PATH = config.get('GENERAL', 'snippet_path')
 SNIPPET_SUFIX = config.get('GENERAL', 'snippet_sufix')
 
-# documentation database
-UNODOC_DB = os.path.join(WORKSPACE_DIR, 'unoDoc.db')
+# connect documentation database
 conn = sqlite3.connect(UNODOC_DB)
 
 # JSON serialization paths
 RESULTFILE = 'result.txt'
-
 RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
 
 # Checked items
