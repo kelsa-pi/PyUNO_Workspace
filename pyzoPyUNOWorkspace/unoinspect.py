@@ -181,7 +181,7 @@ class Inspector:
                     if params == "()":
                         params = "()"
                     else:
-                        params = params.replace(", )", ")")
+                        params = params.replace(", )", " )")
         
                     M[m_name]['repr'] = str(params)
                 
