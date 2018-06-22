@@ -178,6 +178,20 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # Create all items counter
         self._desc_all_items = QtWidgets.QLabel(self)
         self._desc_all_items.setText("0")
+        #
+        self._search_line = QtWidgets.QLineEdit(self)
+        self._search_line.setReadOnly(False)
+        self._search_line.setToolTip('Search')
+        #
+        self._search = QtWidgets.QToolButton(self)
+        self._search.setIconSize(QtCore.QSize(16, 16))
+        self._search.setText("Search")
+        self._search.setToolTip("Search")
+        #
+        self._clear = QtWidgets.QToolButton(self)
+        self._clear.setIconSize(QtCore.QSize(16, 16))
+        self._clear.setText("Clear")
+        self._clear.setToolTip("Clear")
 
         # ----- Layout 6 -----
 
@@ -230,8 +244,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_5.addWidget(self._desc_counter, 0)
         layout_5.addWidget(self._desc_of, 0)
         layout_5.addWidget(self._desc_all_items, 1)
+        layout_5.addWidget(self._search_line, 1)
+        layout_5.addWidget(self._search, 0)
+        layout_5.addWidget(self._clear, 0)
+        
 
-        # Layout 5: Help description layout
+        # Layout 6: Help description layout
         layout_6 = QtWidgets.QVBoxLayout()
         layout_6.addWidget(self._description, 0)
 
@@ -269,10 +287,33 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._help_forward.pressed.connect(self.onForwardPress)
         #
         # self._option_save.pressed.connect(self.onSaveOptionsInConf)
+        #
+        self._search.pressed.connect(self.onSearchPress)
+        self._clear.pressed.connect(self.onClearPress)
 
     # ---------------------------- 
     #           EVENTS
     # ----------------------------
+    
+    def onClearPress(self):
+        self._description.clear()
+        self._search_line.setText('')
+        self._desc_counter.setText("0")
+        self._desc_all_items.setText("0")
+    
+    def onSearchPress(self):
+        from .tree import conn
+        self._description.clear()
+        
+        search = self._search_line.text()
+        cur = conn.cursor()
+        cur.execute("SELECT signature, description FROM UNOtable WHERE  name like ?", ('%'+search+'%',))
+        rows = cur.fetchall()
+        for sig, desc in rows:
+            res = sig + '\n' + desc + '-' * 80
+
+            self._description.addItem(res)
+       
 
     def onHomePress(self):
         """ Back to start """
