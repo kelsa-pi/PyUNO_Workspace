@@ -175,10 +175,13 @@ class Inspector:
                         
                         params = params + _mode_to_str(infos[i].aMode) + " " + str(args[i].Name) + " " + str(infos[i].aName) + ", "
                     
+                    
                     params = params + ")"
                     
                     if params == "()":
                         params = "()"
+                    else:
+                        params = params.replace(", )", ")")
         
                     M[m_name]['repr'] = str(params)
                 
