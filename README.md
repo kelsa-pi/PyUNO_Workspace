@@ -23,7 +23,12 @@ PyUNO Workspace is a modified version of Pyzo IDE Workspace plugin, designed for
 
 ## Requirements
 
-To get started working with PyUNO Workspace and Pyzo, you’ll need to have access to the Python 3 interpreter (not LibreOffice one). 
+To get started working with PyUNO Workspace and Pyzo, you’ll need:
+* Python 3 interpreter for your operating system
+* PySide or PySide2 or PyQt4 or PyQt5
+* Pyzo IDE
+* PyUNO Workspace and
+* LibreOffice 5+
 
 [Pyzo IDE](https://github.com/pyzo/pyzo) - Runs on Python3 and needs PySide/PySide2/PyQt4/PyQt5. One can install Pyzo with `python3 -m pip install pyzo`. There is [binaries](http://www.pyzo.org/start.html) for Windows, Linux and OS X and installation instructions [here](http://www.pyzo.org/install.html#install) 
 
