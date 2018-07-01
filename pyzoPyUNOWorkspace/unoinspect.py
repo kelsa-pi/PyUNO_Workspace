@@ -175,7 +175,6 @@ class Inspector:
                         
                         params = params + _mode_to_str(infos[i].aMode) + " " + str(args[i].Name) + " " + str(infos[i].aName) + ", "
                     
-                    
                     params = params + ")"
                     
                     if params == "()":
@@ -215,7 +214,7 @@ class Inspector:
         """
         # store result in dictionary
         context = {}
-        if result== 'a':
+        if result == 'a':
             # inspect properties and methods
             p = self._inspectProperties(object)
             m = self._inspectMethods(object)
@@ -230,7 +229,7 @@ class Inspector:
                     if k in item:
                         context[k] = v
         
-        elif result== 'm':
+        elif result == 'm':
             # inspect methods only
             m = self._inspectMethods(object)
             if item is None:
@@ -240,7 +239,7 @@ class Inspector:
                     if k in item:
                         context[k] = v
         
-        elif result== 'p':
+        elif result == 'p':
             # inspect properties only
             p = self._inspectProperties(object)
             if item is None:

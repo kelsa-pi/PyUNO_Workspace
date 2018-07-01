@@ -181,8 +181,8 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # # JSON serialization file
         if not os.path.isfile(RESULT):
-             with open(RESULT, 'w') as fl:
-                 fl.write('{}')
+            with open(RESULT, 'w') as fl:
+                fl.write('{}')
 
         self._config = parent._config
         self.old_item = ''
@@ -453,7 +453,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """
 
         self.parent()._description.clear()
-        item = QtWidgets.QListWidgetItem()
 
         index = self.currentIndex()
         find = index.model().data(index)
@@ -470,7 +469,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # TODO: improve web parser
         try:
-            res = ''
             for sig, desc in rows:
                 sig = sig.replace('&newline&', '\n')
                 sig = sig.replace('raises', '\nraises')

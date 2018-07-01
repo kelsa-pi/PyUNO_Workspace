@@ -247,7 +247,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_5.addWidget(self._search_line, 1)
         layout_5.addWidget(self._search, 0)
         layout_5.addWidget(self._clear, 0)
-        
 
         # Layout 6: Help description layout
         layout_6 = QtWidgets.QVBoxLayout()
@@ -314,7 +313,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
                 res = sig + '\n' + desc + '-' * 80
     
                 self._description.addItem(res)
-       
 
     def onHomePress(self):
         """ Back to start """
@@ -335,7 +333,8 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         data = line.split('.')
         return self.createCodeSnippet(data)
     
-    def createCodeSnippet(self, data):
+    @staticmethod
+    def createCodeSnippet(data):
         """ Create code snippet """
         target = 'initial_target'
         code = ''
