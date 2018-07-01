@@ -34,7 +34,7 @@ To get started working with PyUNO Workspace and Pyzo, you’ll need:
 
 ## Installation and usage
 
-Copy pyzoPyUNOWorkspace directory from this repo to PYZO_INSTALL_PATH/pyzo/tools directory.
+Copy `pyzoPyUNOWorkspace` directory from this repo to `$PYZO_INSTALL_PATH/pyzo/tools` or `$USER/.pyzo/tools`directory.
 
 For more information see [documenation](https://github.com/kelsa-pi/PyUNO_Workspace/wiki) 
 
