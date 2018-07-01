@@ -557,11 +557,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             size = int( text.split(':',1)[1][:-2] )
             # Update
             self._config.fontSize = size
-            # Update
+            
             rows = self._description.count()
-            lst = [] 
             for row in range(rows):
                 item = self._description.item(row)
+                # Set font size
                 font = item.font()
                 font.setPointSize(size)
                 item.setFont(QtGui.QFont(font))

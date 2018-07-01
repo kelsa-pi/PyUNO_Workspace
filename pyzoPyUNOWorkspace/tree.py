@@ -468,8 +468,11 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.parent()._desc_counter.setText("0")
 
         # TODO: improve html parser
+        
         try:
+            n = 0
             for sig, desc in rows:
+                # cleanup
                 sig = sig.replace('&newline&', '\n')
                 sig = sig.replace('raises', '\nraises')
                 sig = sig.replace('set \nraises', 'set raises')
@@ -482,10 +485,15 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 desc = desc.replace('Returnssequence', 'Returns sequence')
                 desc = desc.replace('Returnsthe', 'Returns the')
                 desc = desc.replace('Returnsa', 'Returns a')
-
+                # add new item
                 res = sig + '\n' + desc + '-' * 80
-
                 self.parent()._description.addItem(res)
-
+                # set font size
+                item = self.parent()._description.item(n)
+                font = item.font()
+                font.setPointSize(self._config.fontSize)
+                item.setFont(QtGui.QFont(font))
+                n += 1
+                
         except:
             pass
