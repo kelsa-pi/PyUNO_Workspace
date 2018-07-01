@@ -306,13 +306,14 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._description.clear()
         
         search = self._search_line.text()
-        cur = conn.cursor()
-        cur.execute("SELECT signature, description FROM UNOtable WHERE  name like ?", ('%'+search+'%',))
-        rows = cur.fetchall()
-        for sig, desc in rows:
-            res = sig + '\n' + desc + '-' * 80
-
-            self._description.addItem(res)
+        if search:
+            cur = conn.cursor()
+            cur.execute("SELECT signature, description FROM UNOtable WHERE  name like ?", ('%'+search+'%',))
+            rows = cur.fetchall()
+            for sig, desc in rows:
+                res = sig + '\n' + desc + '-' * 80
+    
+                self._description.addItem(res)
        
 
     def onHomePress(self):
