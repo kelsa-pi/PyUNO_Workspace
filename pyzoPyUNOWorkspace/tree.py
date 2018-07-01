@@ -467,7 +467,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.parent()._desc_all_items.setText(str(len(rows)))
         self.parent()._desc_counter.setText("0")
 
-        # TODO: improve web parser
+        # TODO: improve html parser
         try:
             for sig, desc in rows:
                 sig = sig.replace('&newline&', '\n')
