@@ -9,6 +9,7 @@
 # Author: Sasa Kelecevic, 2017
 
 import re
+import sys
 import pyzo
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
 from .tree import PyUNOWorkspaceTree, PyUNOWorkspaceProxy
@@ -33,8 +34,14 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         toolId = self.__class__.__name__.lower()
         self._config = pyzo.config.tools[toolId]
+        # Set config
         if not hasattr(self._config, 'hideTypes'):
             self._config.hideTypes = []
+        if not hasattr(self._config, 'fontSize'):
+            if sys.platform == 'darwin':
+                self._config.fontSize = 12
+            else:
+                self._config.fontSize = 10    
         
         style = QtWidgets.qApp.style()
 
@@ -159,6 +166,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # self._option_save.setToolTip("Save all options")
 
         # ----- Layout 5 -----
+        
         # Create Back button
         self._help_back = QtWidgets.QToolButton(self)
         self._help_back.setIcon(style.standardIcon(style.SP_ArrowLeft))
@@ -192,7 +200,17 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._clear.setIconSize(QtCore.QSize(16, 16))
         self._clear.setText("Clear")
         self._clear.setToolTip("Clear")
-
+        
+        # Create font options menu
+        self._font_options = QtWidgets.QToolButton(self)
+        self._font_options.setIcon(pyzo.icons.wrench)
+        self._font_options.setIconSize(QtCore.QSize(16,16))
+        self._font_options.setPopupMode(self._options.InstantPopup)
+        self._font_options.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self._font_options._menu = QtWidgets.QMenu()
+        self._font_options.setMenu(self._font_options._menu)
+        self.onFontOptionsPress()  # create menu now
+        
         # ----- Layout 6 -----
 
         self._description = QtWidgets.QListWidget(self)
@@ -247,6 +265,8 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_5.addWidget(self._search_line, 1)
         layout_5.addWidget(self._search, 0)
         layout_5.addWidget(self._clear, 0)
+        layout_5.addWidget(self._font_options, 0)
+        
 
         # Layout 6: Help description layout
         layout_6 = QtWidgets.QVBoxLayout()
@@ -267,7 +287,8 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # ------ Bind events
         self._home.pressed.connect(self.onHomePress)
         self._refresh.pressed.connect(self.onRefreshPress)
-        self._up.pressed.connect(self._tree._proxy.goUp)
+        self._up.pressed.connect(self._tree._proxy.goUp) # Go back
+        self._up.pressed.connect(self.onClearPress)
         self._enumerate.pressed.connect(self.onEnumeratePress)
         self._insert_code.pressed.connect(self.onInsertCodeInEditor)
         #
@@ -289,6 +310,9 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         #
         self._search.pressed.connect(self.onSearchPress)
         self._clear.pressed.connect(self.onClearPress)
+        
+        self._font_options.pressed.connect(self.onFontOptionsPress)
+        self._font_options._menu.triggered.connect(self.onFontOptionMenuTiggered)
 
     # ---------------------------- 
     #           EVENTS
@@ -319,12 +343,14 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         new_line = ''
         self._line.setText(new_line)
         self._tree._proxy.setName(new_line)
+        self.onClearPress()
         
     def onRefreshPress(self):
         """ Refresh """
         # item = self._tree.currentItem()
         line = self._line.text()
         self._tree._proxy.setName(line)
+        self.onClearPress()
     
     def getCodeSnippet(self):
         """
@@ -504,7 +530,42 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # Update
         self._tree.fillWorkspace()
+        
+    def onFontOptionsPress(self):
+        """ Create the menu for the button, Do each time to make sure
+        the checks are right. """
+        
+        # Get menu
+        menu = self._font_options._menu
+        menu.clear()
+        
+        # Add font size options
+        currentSize = self._config.fontSize
+        for i in range(8,15):
+            action = menu.addAction('font-size: %ipx' % i)
+            action.setCheckable(True)
+            action.setChecked(i==currentSize)
     
+    
+    def onFontOptionMenuTiggered(self, action):
+        """  The user decides what to show in the structure. """
+        # Get text
+        text = action.text().lower()
+        
+        if 'size' in text:
+            # Get font size
+            size = int( text.split(':',1)[1][:-2] )
+            # Update
+            self._config.fontSize = size
+            # Update
+            rows = self._description.count()
+            lst = [] 
+            for row in range(rows):
+                item = self._description.item(row)
+                font = item.font()
+                font.setPointSize(size)
+                item.setFont(QtGui.QFont(font))
+
     # def onSaveOptionsInConf(self):
     #     """ Save options in configuration file. """
     #
