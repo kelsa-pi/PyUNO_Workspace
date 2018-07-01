@@ -42,5 +42,5 @@ For more information see [documenation](https://github.com/kelsa-pi/PyUNO_Worksp
 BSD
 
 ## Status
-Beta - Reasonably feature-complete and stable enough to be usable for day-to-day work.
+Release Candidate 1 - Feature complete and stable enough to be usable for day-to-day work.
 
