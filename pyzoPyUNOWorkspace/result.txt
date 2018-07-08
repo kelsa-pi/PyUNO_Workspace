@@ -1,1 +1,75 @@
-{}
+{
+    "getCount": {
+        "repr": "( )",
+        "items": [],
+        "type": "long"
+    },
+    "getElementType": {
+        "repr": "( )",
+        "items": [],
+        "type": "type"
+    },
+    "getElementNames": {
+        "repr": "( )",
+        "items": [],
+        "type": "[]string"
+    },
+    "release": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "acquire": {
+        "repr": "( )",
+        "items": [],
+        "type": "void"
+    },
+    "getByName": {
+        "repr": "( [in] string aName )",
+        "items": [
+            "CharacterStyles",
+            "ParagraphStyles",
+            "RubyStyles"
+        ],
+        "type": "any"
+    },
+    "hasByName": {
+        "repr": "( [in] string aName )",
+        "items": [],
+        "type": "boolean"
+    },
+    "hasElements": {
+        "repr": "( )",
+        "items": [],
+        "type": "boolean"
+    },
+    "queryInterface": {
+        "repr": "( [in] type aType )",
+        "items": [],
+        "type": "any"
+    },
+    "getImplementationId": {
+        "repr": "( )",
+        "items": [],
+        "type": "[]byte"
+    },
+    "getByIndex": {
+        "repr": "( [in] long Index )",
+        "items": [
+            "0",
+            "1",
+            "2"
+        ],
+        "type": "any"
+    },
+    "queryAdapter": {
+        "repr": "( )",
+        "items": [],
+        "type": ".uno.XAdapter"
+    },
+    "getTypes": {
+        "repr": "( )",
+        "items": [],
+        "type": "[]type"
+    }
+}

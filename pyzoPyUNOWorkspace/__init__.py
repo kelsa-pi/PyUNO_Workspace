@@ -217,9 +217,9 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._description.setWordWrap(True)
         self._description.setAutoFillBackground(True)
         self._description.setAlternatingRowColors(True)
-        self._description.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self._description.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self._description.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-
+        
         # ------ Set layouts
         
         # Layout 1: Object and insert code layout
@@ -565,7 +565,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
                 font = item.font()
                 font.setPointSize(size)
                 item.setFont(QtGui.QFont(font))
-
+        self._description.updateGeometries()
     # def onSaveOptionsInConf(self):
     #     """ Save options in configuration file. """
     #
