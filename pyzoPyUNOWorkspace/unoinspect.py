@@ -170,11 +170,12 @@ class Inspector:
                     args = method.ParameterTypes
                     infos = method.ParameterInfos
                     
+                    params_names = []
                     params = "( "
                     for i in range(0, len(args)):
                         
                         params = params + _mode_to_str(infos[i].aMode) + " " + str(args[i].Name) + " " + str(infos[i].aName) + ", "
-                    
+                        params_names.append(str(infos[i].aName))
                     params = params + ")"
                     
                     if params == "()":
@@ -183,10 +184,12 @@ class Inspector:
                         params = params.replace(", )", " )")
         
                     M[m_name]['repr'] = str(params)
+                    M[m_name]['param'] = params_names
                 
                 except Exception as err:
                     M[m_name]['type'] = 'ERROR'
                     M[m_name]['repr'] = str(err)
+                    M[m_name]['param'] = []
         except:
             pass
                 
