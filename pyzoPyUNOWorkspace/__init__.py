@@ -166,17 +166,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # self._option_save.setToolTip("Save all options")
 
         # ----- Layout 5 -----
-        
-        # Create Back button
-        self._help_back = QtWidgets.QToolButton(self)
-        self._help_back.setIcon(style.standardIcon(style.SP_ArrowLeft))
-        self._help_back.setIconSize(QtCore.QSize(16, 16))
-        self._help_back.setToolTip("Go back")
-        # Create Forward button
-        self._help_forward = QtWidgets.QToolButton(self)
-        self._help_forward.setIcon(style.standardIcon(style.SP_ArrowRight))
-        self._help_forward.setIconSize(QtCore.QSize(16, 16))
-        self._help_forward.setToolTip("Go forward")
+
         # Create counter
         self._desc_counter = QtWidgets.QLabel(self)
         self._desc_counter.setText("0")
@@ -213,12 +203,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         
         # ----- Layout 6 -----
 
-        self._description = QtWidgets.QListWidget(self)
-        self._description.setWordWrap(True)
-        self._description.setAutoFillBackground(True)
-        self._description.setAlternatingRowColors(True)
-        self._description.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self._description.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self._description = QtWidgets.QTextBrowser(self)
+        initText =  """
+        Clik on property or method to show UNO API reference.
+        """
+        self._description.setText(initText)
         
         # ------ Set layouts
         
@@ -257,8 +246,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # Layout 5: Help navigation layout
         layout_5 = QtWidgets.QHBoxLayout()
-        layout_5.addWidget(self._help_back, 0)
-        layout_5.addWidget(self._help_forward, 0)
         layout_5.addWidget(self._desc_counter, 0)
         layout_5.addWidget(self._desc_of, 0)
         layout_5.addWidget(self._desc_all_items, 1)
@@ -266,7 +253,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_5.addWidget(self._search, 0)
         layout_5.addWidget(self._clear, 0)
         layout_5.addWidget(self._font_options, 0)
-        
 
         # Layout 6: Help description layout
         layout_6 = QtWidgets.QVBoxLayout()
@@ -303,9 +289,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._options.pressed.connect(self.onOptionsPress)
         self._options._menu.triggered.connect(self.onOptionMenuTiggered)
         #
-        self._help_back.pressed.connect(self.onBackPress)
-        self._help_forward.pressed.connect(self.onForwardPress)
-        #
         # self._option_save.pressed.connect(self.onSaveOptionsInConf)
         #
         self._search.pressed.connect(self.onSearchPress)
@@ -319,13 +302,15 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
     # ----------------------------
     
     def onClearPress(self):
+        """ Remove results """
         self._description.clear()
         self._search_line.setText('')
         self._desc_counter.setText("0")
         self._desc_all_items.setText("0")
     
     def onSearchPress(self):
-        from .tree import conn
+        """ Search UNO API """
+        from .tree import conn, formatReference
         self._description.clear()
         
         search = self._search_line.text()
@@ -334,9 +319,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             cur.execute("SELECT signature, description FROM UNOtable WHERE  name like ?", ('%'+search+'%',))
             rows = cur.fetchall()
             for sig, desc in rows:
-                res = sig + '\n' + desc + '-' * 80
+                sig, desc = formatReference(sig, desc, search)
+                sig = "<p style = 'background-color: lightgray'>{}</p>".format(sig)
+                res = sig + desc
     
-                self._description.addItem(res)
+            self._description.setText(res)
 
     def onHomePress(self):
         """ Back to start """
@@ -477,30 +464,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # show
         self._history.addItems(new_list)
 
-    def onForwardPress(self):
-        """Show next API reference"""
-        all_items = self._desc_all_items.text()
-
-        row = self._description.currentRow()
-        counter = row + 1
-        self._description.setCurrentRow(counter)
-
-        if counter == int(all_items):
-            self._desc_counter.setText("0")
-        else:
-            self._desc_counter.setText(str(counter + 1))
-
-    def onBackPress(self):
-        """Show previous  API reference"""
-        row = self._description.currentRow()
-        counter = row - 1
-        self._description.setCurrentRow(counter)
-
-        if self._description.currentRow() < 0:
-            self._desc_counter.setText("0")
-        else:
-            self._desc_counter.setText(str(counter + 1))
-
     def onOptionsPress(self):
         """ Create the menu for the button, Do each time to make sure
         the checks are right. """
@@ -557,15 +520,13 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             size = int( text.split(':',1)[1][:-2] )
             # Update
             self._config.fontSize = size
+            # Set font size
+            font = self._description.font()
+            font.setPointSize(self._config.fontSize)
+            self._description.setFont(QtGui.QFont(font))
             
-            rows = self._description.count()
-            for row in range(rows):
-                item = self._description.item(row)
-                # Set font size
-                font = item.font()
-                font.setPointSize(size)
-                item.setFont(QtGui.QFont(font))
         self._description.updateGeometries()
+    
     # def onSaveOptionsInConf(self):
     #     """ Save options in configuration file. """
     #

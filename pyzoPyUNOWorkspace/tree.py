@@ -2,6 +2,7 @@ import configparser
 from inspect import getsourcefile
 from json import load
 import os
+import re
 import sqlite3
 import webbrowser
 
@@ -33,6 +34,42 @@ RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
 
 # Checked items
 checked_dict = {}
+
+
+def formatReference(signature, description, fnd=None, getfnd=None):
+    #
+    signature = signature.replace('&newline&', '\n')
+
+    if getfnd:
+        signature = re.sub(r'\b' + getfnd + r'\b', "<strong>{}</strong>".format(getfnd), signature)
+        signature = re.sub(r'\b' + getfnd + '()' + r'\b', "<strong>{}</strong>".format(getfnd), signature)
+
+    if fnd:
+        signature = re.sub(r'\b' + fnd + r'\b', "<strong>{}</strong>".format(fnd), signature)
+
+    signature = signature.replace('set raises',
+                                  '<span style="font-weight:bold;color:red">{}</span>'.format('set raises'))
+    signature = signature.replace('get raises',
+                                  '<span style="font-weight:bold;color:red">{}</span>'.format('get raises'))
+    signature = signature.replace('raises', '<span style="font-weight:bold;color:red">{}</span>'.format('raises'))
+    #
+    description = description.replace('&newline&&newline&', '<p></p>')
+    description = description.replace('&newline&', '<p></p>')
+    description = re.sub(r'\b{}\b'.format('Parameters'), "<p style='font-weight:bold'>{}</p>".format('Parameters'),
+                         description)
+    description = re.sub(r'\b{}\b'.format('Exceptions'), "<p style='font-weight:bold'>{}</p>".format('Exceptions'),
+                         description)
+    description = re.sub(r'\b{}\b'.format('See also'), "<p style='font-weight:bold'>{}</p>".format('See also'),
+                         description)
+    description = re.sub(r'\b{}\b'.format('Returns'), "<p style='font-weight:bold'>{}</p>".format('Returns'),
+                         description)
+    #
+    description = description.replace('Attention',
+                                      '<span style="font-weight:bold;color:red">{}</span>'.format('Attention'))
+    description = description.replace('Deprecated',
+                                      '<span style="font-weight:bold;color:red">{}</span>'.format('Deprecated'))
+
+    return signature, description
 
 
 class PyUNOWorkspaceItem(QtWidgets.QTreeWidgetItem):
@@ -445,7 +482,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.parent()._all.setChecked(True)
 
         # Clear UNO dict
-        self._proxy._uno_dic = {}
+        # self._proxy._uno_dic = {}
 
     def onItemClicked(self):
         """ onItemClicked()
@@ -467,33 +504,69 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.parent()._desc_all_items.setText(str(len(rows)))
         self.parent()._desc_counter.setText("0")
 
-        # TODO: improve html parser
-        
         try:
             n = 0
+            txt = ""
+            ok_counter = 0
             for sig, desc in rows:
-                # cleanup
-                sig = sig.replace('&newline&', '\n')
-                sig = sig.replace('raises', '\nraises')
-                sig = sig.replace('set \nraises', 'set raises')
-                sig = sig.replace('get \nraises', 'get raises')
-                sig = sig.strip()
-
-                desc = desc.replace('&newline&&newline&', '&newline&')
-                desc = desc.replace('&newline&', '\n')
-                desc = desc.replace('Returnsan', 'Returns an')
-                desc = desc.replace('Returnssequence', 'Returns sequence')
-                desc = desc.replace('Returnsthe', 'Returns the')
-                desc = desc.replace('Returnsa', 'Returns a')
-                # add new item
-                res = sig + '\n' + desc + '-' * 80
-                self.parent()._description.addItem(res)
-                # set font size
-                item = self.parent()._description.item(n)
-                font = item.font()
-                font.setPointSize(self._config.fontSize)
-                item.setFont(QtGui.QFont(font))
-                n += 1
+                print('***************')
+                sig, desc = formatReference(sig, desc,find, getfind)
+                print('-------------------')
+                # parameters
+                try:
+                    find_param = len(self._proxy._uno_dict[find]['param'])
+                except:
+                    find_param = None
                 
+                try:
+                    get_param = len(self._proxy._uno_dict[getfind]['param'])
+                except:
+                    get_param = None
+                
+                # signature color    
+                if len(rows) == 1:
+                    # ok
+                    sig = "<p style = 'background-color: palegreen'>{}</p>".format(sig)
+                    ok_counter += 1
+                
+                elif find_param:
+                    t = 0
+                    for i in self._proxy._uno_dict[find]['param']:
+                        print(i)
+                        if i in sig:
+                            t = t + 1
+                    print(str(t))
+                    if t == find_param:
+                        sig = "<p style = 'background-color: palegreen'>{}</p>".format(sig)
+                        ok_counter += 1
+                    else:
+                        sig = "<p style = 'background-color: lightgray'>{}</p>".format(sig)
+                        
+                elif  get_param:
+                    t = 0
+                    for i in self._proxy._uno_dict[getfind]['param']:
+                        print(i)
+                        if i in sig:
+                            t = t + 1
+                    print(str(t))
+                    if t == get_param:
+                        sig = "<p style = 'background-color: palegreen'>{}</p>".format(sig)
+                        ok_counter += 1
+                    else:
+                        sig = "<p style = 'background-color: lightgray'>{}</p>".format(sig)
+                      
+                else:
+                    sig = "<p style = 'background-color: lightgray'>{}</p>".format(sig)
+                
+                res = sig + desc
+                txt = txt + res
+                # set font size
+                font = self.parent()._description.font()
+                font.setPointSize(self._config.fontSize)
+                self.parent()._description.setFont(QtGui.QFont(font))
+                
+                n += 1
+            self.parent()._description.setText(txt)
+            self.parent()._desc_counter.setText(str(ok_counter))    
         except:
             pass
