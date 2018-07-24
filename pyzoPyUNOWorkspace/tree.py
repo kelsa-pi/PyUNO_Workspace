@@ -36,39 +36,30 @@ RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
 checked_dict = {}
 
 
-def formatReference(signature, description, fnd=None, getfnd=None):
-    #
+def formatReference(signature, description, bold=[]):
+    
+    # format signature
     signature = signature.replace('&newline&', '\n')
-
-    if getfnd:
-        signature = re.sub(r'\b' + getfnd + r'\b', "<strong>{}</strong>".format(getfnd), signature)
-        signature = re.sub(r'\b' + getfnd + '()' + r'\b', "<strong>{}</strong>".format(getfnd), signature)
-
-    if fnd:
-        signature = re.sub(r'\b' + fnd + r'\b', "<strong>{}</strong>".format(fnd), signature)
-
-    signature = signature.replace('set raises',
-                                  '<span style="font-weight:bold;color:red">{}</span>'.format('set raises'))
-    signature = signature.replace('get raises',
-                                  '<span style="font-weight:bold;color:red">{}</span>'.format('get raises'))
-    signature = signature.replace('raises', '<span style="font-weight:bold;color:red">{}</span>'.format('raises'))
-    #
+    # bold
+    if bold:
+        for m in bold:
+            signature = re.sub(r'\b' + m + r'\b', "<strong>{}</strong>".format(m), signature)
+    # bold red
+    for r in ['set raises', 'get raises', 'raises']:
+        signature = signature.replace(r,
+                                  '<span style="font-weight:bold;color:red">{}</span>'.format(r))
+    # format description
     description = description.replace('&newline&&newline&', '<p></p>')
     description = description.replace('&newline&', '<p></p>')
-    description = re.sub(r'\b{}\b'.format('Parameters'), "<p style='font-weight:bold'>{}</p>".format('Parameters'),
+    # bold 
+    for d in ['Parameters', 'Exceptions', 'See also', 'Returns']:
+        description = re.sub(r'\b{}\b'.format(d), "<p style='font-weight:bold'>{}</p>".format(d),
                          description)
-    description = re.sub(r'\b{}\b'.format('Exceptions'), "<p style='font-weight:bold'>{}</p>".format('Exceptions'),
-                         description)
-    description = re.sub(r'\b{}\b'.format('See also'), "<p style='font-weight:bold'>{}</p>".format('See also'),
-                         description)
-    description = re.sub(r'\b{}\b'.format('Returns'), "<p style='font-weight:bold'>{}</p>".format('Returns'),
-                         description)
-    #
-    description = description.replace('Attention',
-                                      '<span style="font-weight:bold;color:red">{}</span>'.format('Attention'))
-    description = description.replace('Deprecated',
-                                      '<span style="font-weight:bold;color:red">{}</span>'.format('Deprecated'))
-
+    # bold red
+    for w in ['Deprecated']:
+        description = re.sub(r'\b{}\b'.format(w), '<span style="font-weight:bold;color:red">{}</span>'.format(w),
+                         description)                     
+    
     return signature, description
 
 
@@ -510,7 +501,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             ok_counter = 0
             for sig, desc in rows:
                 print('***************')
-                sig, desc = formatReference(sig, desc,find, getfind)
+                sig, desc = formatReference(sig, desc, bold=[find, getfind])
                 print('-------------------')
                 # parameters
                 try:
@@ -557,6 +548,8 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                       
                 else:
                     sig = "<p style = 'background-color: lightgray'>{}</p>".format(sig)
+                
+                desc = "<p>{}</p>".format(desc)
                 
                 res = sig + desc
                 txt = txt + res

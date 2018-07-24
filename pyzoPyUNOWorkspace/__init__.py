@@ -319,7 +319,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             cur.execute("SELECT signature, description FROM UNOtable WHERE  name like ?", ('%'+search+'%',))
             rows = cur.fetchall()
             for sig, desc in rows:
-                sig, desc = formatReference(sig, desc, search)
+                sig, desc = formatReference(sig, desc, bold=[search])
                 sig = "<p style = 'background-color: lightgray'>{}</p>".format(sig)
                 res = sig + desc
     
