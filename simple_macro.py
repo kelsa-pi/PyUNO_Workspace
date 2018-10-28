@@ -3,7 +3,6 @@
 
 import uno
 
-
 def MyMacro(*args):
     """Write Helo World in Writer"""
 

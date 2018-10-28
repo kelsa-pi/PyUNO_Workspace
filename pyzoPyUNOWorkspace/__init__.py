@@ -5,7 +5,7 @@
 # The full license can be found in 'license.txt'.
 #
 # PyUNO Workspace is a modified version of Pyzo's Workspace tool,
-# designed for Python and PyUno introspection.
+# designed for Python and PyUNO introspection.
 # Author: Sasa Kelecevic, 2017
 
 import re

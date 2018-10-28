@@ -479,7 +479,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """ onItemClicked()
         If item clicked in the workspace tree show help
         """
-
+        # Clear
         self.parent()._description.clear()
 
         index = self.currentIndex()
