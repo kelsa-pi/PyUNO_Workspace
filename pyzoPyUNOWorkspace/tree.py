@@ -31,7 +31,6 @@ conn = sqlite3.connect(UNODOC_DB)
 # JSON serialization paths
 RESULTFILE = "result.txt"
 RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
-print('RESULT: ' + str(RESULT))
 # Checked items
 checked_dict = {}
 
@@ -232,6 +231,11 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self._config = parent._config
         self.old_item = ""
         self._name_item = ""
+
+        # tree selected item
+        self._tree_name = ""
+        self._tree_type = ""
+        self._tree_repr = ""
 
         # Set header stuff
         self.setHeaderHidden(False)
@@ -515,22 +519,36 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """
         # Clear
         self.parent()._description.clear()
-        index = self.currentIndex()
-        find = str(index.model().data(index))
+        self._tree_name = ""
+        self._tree_type = ""
+        self._tree_repr = ""
+
+        # Get tree items
+        items = self.currentItem()
+
+        # store tree items in vars
+        self._tree_name = str(items.data(0, 0))
+        self._tree_type = str(items.data(1, 0))
+        self._tree_repr = str(items.data(2, 0))
+
+        # Find documentation for this item
+        find = str(items.data(0, 0))
 
         try:
             kind = str(self._proxy._uno_dict[find]['desc'])
-
+            # find in UNO or Python documentation
             if kind.startswith('uno'):
+                # UNO
                 self.unoDescriptions(find)
             else:
+                # Python
                 find = self.parent()._line.text() + '.' + find
                 self.queryDoc(find)
         except:
             pass
 
-    def queryDoc(self,name):
-        """ Query the doc for the text in the line edit. """
+    def queryDoc(self, name):
+        """ Query the python documentation for the text in the line edit. """
         # Get shell and ask for the documentation
         self._name_item = ""
         shell = pyzo.shells.getCurrentShell()
@@ -540,7 +558,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             self._name_item = name
 
     def queryDoc_response(self, future):
-        """ Process the response from the shell. """
+        """ Process the response, python documentation, from the shell. """
 
         # Process future
         if future.cancelled():
@@ -558,7 +576,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         n=0
         txt = ''
-        start =(self._name_item + '(', name[-1], 'bool(', 'bytes(', 'dict(', 'int(', 'list(', 'str(', 'tuple(', )
+        start = (self._name_item + '(', name[-1], 'bool(', 'bytes(', 'dict(', 'int(', 'list(', 'str(', 'tuple(', )
         for i, des in enumerate(response_txt):
             if i == 0:
                 if name[-1] in des:
@@ -580,6 +598,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.parent()._description.setText(txt)
 
     def unoDescriptions(self, find):
+        """ Process UNO documentation. """
 
         if find.startswith("get"):
             getfind = find.replace("get", "")
@@ -597,77 +616,63 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         try:
             n = 0
-            txt = ""
             ok_counter = 0
+            good = ""
+            bad = ""
             for sig, desc in rows:
-                # print("***************")
-                sig, desc = formatReference(sig, desc, bold=[find, getfind])
-                # print("-------------------")
-                # parameters
-                try:
-                    find_param = len(self._proxy._uno_dict[find]["param"])
-                except:
-                    find_param = None
 
-                try:
-                    get_param = len(self._proxy._uno_dict[getfind]["param"])
-                except:
-                    get_param = None
+                sig, desc = formatReference(sig, desc, bold=[find, getfind])
 
                 # signature color
+                sig_OK = False
                 if len(rows) == 1:
-                    # ok
+                    # if only one result, color green
                     sig = "<p style = 'background-color: palegreen'>{}</p>".format(
                         sig
                     )
                     ok_counter += 1
+                    sig_OK = True
 
-                elif find_param:
-                    t = 0
-                    for i in self._proxy._uno_dict[find]["param"]:
-                        if i in sig:
-                            t = t + 1
-                    if t == find_param:
-                        sig = "<p style = 'background-color: palegreen'>{}</p>".format(
-                            sig
-                        )
-                        ok_counter += 1
-                    else:
-                        sig = "<p style = 'background-color: lightgray'>{}</p>".format(
-                            sig
-                        )
+                elif self._tree_repr in sig:
+                    # if param is OK, color green
+                    sig = "<p style = 'background-color: palegreen'>{}</p>".format(
+                        sig
+                    )
+                    ok_counter += 1
+                    sig_OK = True
 
-                elif get_param:
-                    t = 0
-                    for i in self._proxy._uno_dict[getfind]["param"]:
-                        print(i)
-                        if i in sig:
-                            t = t + 1
-                    if t == get_param:
-                        sig = "<p style = 'background-color: palegreen'>{}</p>".format(
-                            sig
-                        )
-                        ok_counter += 1
-                    else:
-                        sig = "<p style = 'background-color: lightgray'>{}</p>".format(
-                            sig
-                        )
+                elif self._tree_repr == "pyuno object" and sig.startswith("com.sun.star" + self._tree_type):
+                    # if param is OK, color green
+                    sig = "<p style = 'background-color: palegreen'>{}</p>".format(
+                        sig
+                    )
+                    ok_counter += 1
+                    sig_OK = True
 
                 else:
                     sig = "<p style = 'background-color: lightgray'>{}</p>".format(
                         sig
                     )
+                    sig_OK = False
 
                 desc = "<p>{}</p>".format(desc)
 
-                res = sig + desc
-                txt = txt + res
+                if sig_OK:
+                    good = good + sig + desc
+                else:
+                    bad = bad + sig + desc
+
+                sig = ""
+                desc = ""
                 # set font size
                 font = self.parent()._description.font()
                 font.setPointSize(self._config.fontSize)
                 self.parent()._description.setFont(QtGui.QFont(font))
 
                 n += 1
+
+            txt = good + bad
+
             self.parent()._description.setText(txt)
             self.parent()._desc_counter.setText(str(ok_counter))
         except:
