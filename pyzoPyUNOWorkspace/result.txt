@@ -1,1 +1,222 @@
-{}
+{
+    "getForms": {
+        "items": [],
+        "type": ".container.XNameContainer",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "queryInterface": {
+        "items": [],
+        "type": "any",
+        "repr": "( [in] type aType )",
+        "desc": "uno_method"
+    },
+    "addTop": {
+        "items": [],
+        "type": "void",
+        "repr": "( [in] com.sun.star.drawing.XShape xShape )",
+        "desc": "uno_method"
+    },
+    "ElementType": {
+        "items": [],
+        "type": "type",
+        "repr": "<Type instance com.sun.star.drawing.XShape (<Enum instance com.sun.star.uno.TypeClass ('INTERFACE')>)>",
+        "desc": "uno_property"
+    },
+    "getImplementationId": {
+        "items": [],
+        "type": "[]byte",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "getSomething": {
+        "items": [],
+        "type": "hyper",
+        "repr": "( [in] []byte aIdentifier )",
+        "desc": "uno_method"
+    },
+    "Types": {
+        "items": [],
+        "type": "tuple",
+        "repr": "<tuple with 18 elements>",
+        "desc": "uno_property"
+    },
+    "ImplementationName": {
+        "items": [],
+        "type": "string",
+        "repr": "'SwXDrawPage'",
+        "desc": "uno_property"
+    },
+    "getCount": {
+        "items": [],
+        "type": "long",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "acquire": {
+        "items": [],
+        "type": "void",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "hasElements": {
+        "items": [],
+        "type": "boolean",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "queryAggregation": {
+        "items": [],
+        "type": "any",
+        "repr": "( [in] type aType )",
+        "desc": "uno_method"
+    },
+    "createEnumeration": {
+        "items": [
+            "0"
+        ],
+        "type": ".container.XEnumeration",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "ImplementationId": {
+        "items": [],
+        "type": "[]byte",
+        "repr": "<ByteSequence instance 'b'''>",
+        "desc": "uno_property"
+    },
+    "addEventListener": {
+        "items": [],
+        "type": "void",
+        "repr": "( [in] com.sun.star.lang.XEventListener xListener )",
+        "desc": "uno_method"
+    },
+    "getByIndex": {
+        "items": [],
+        "type": "any",
+        "repr": "( [in] long Index )",
+        "desc": "uno_method"
+    },
+    "removeEventListener": {
+        "items": [],
+        "type": "void",
+        "repr": "( [in] com.sun.star.lang.XEventListener aListener )",
+        "desc": "uno_method"
+    },
+    "Delegator": {
+        "items": [],
+        "type": ".uno.XInterface",
+        "repr": "None",
+        "desc": "uno_property"
+    },
+    "release": {
+        "items": [],
+        "type": "void",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "Forms": {
+        "items": [],
+        "type": ".container.XNameContainer",
+        "repr": "pyuno object",
+        "desc": "uno_property"
+    },
+    "getSupportedServiceNames": {
+        "items": [
+            "com.sun.star.drawing.GenericDrawPage"
+        ],
+        "type": "[]string",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "add": {
+        "items": [],
+        "type": "void",
+        "repr": "( [in] com.sun.star.drawing.XShape xShape )",
+        "desc": "uno_method"
+    },
+    "supportsService": {
+        "items": [],
+        "type": "boolean",
+        "repr": "( [in] string ServiceName )",
+        "desc": "uno_method"
+    },
+    "getImplementationName": {
+        "items": [],
+        "type": "string",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "getTypes": {
+        "items": [],
+        "type": "[]type",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "Count": {
+        "items": [],
+        "type": "long",
+        "repr": "0",
+        "desc": "uno_property"
+    },
+    "getElementType": {
+        "items": [],
+        "type": "type",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "remove": {
+        "items": [],
+        "type": "void",
+        "repr": "( [in] com.sun.star.drawing.XShape xShape )",
+        "desc": "uno_method"
+    },
+    "addBottom": {
+        "items": [],
+        "type": "void",
+        "repr": "( [in] com.sun.star.drawing.XShape xShape )",
+        "desc": "uno_method"
+    },
+    "SupportedServiceNames": {
+        "items": [],
+        "type": "tuple",
+        "repr": "<tuple with 1 elements>",
+        "desc": "uno_property"
+    },
+    "queryAdapter": {
+        "items": [],
+        "type": ".uno.XAdapter",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "setDelegator": {
+        "items": [],
+        "type": "void",
+        "repr": "( [in] com.sun.star.uno.XInterface pDelegator )",
+        "desc": "uno_method"
+    },
+    "hasForms": {
+        "items": [],
+        "type": "boolean",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "group": {
+        "items": [],
+        "type": ".drawing.XShapeGroup",
+        "repr": "( [in] com.sun.star.drawing.XShapes xShapes )",
+        "desc": "uno_method"
+    },
+    "dispose": {
+        "items": [],
+        "type": "void",
+        "repr": "( )",
+        "desc": "uno_method"
+    },
+    "ungroup": {
+        "items": [],
+        "type": "void",
+        "repr": "( [in] com.sun.star.drawing.XShapeGroup aGroup )",
+        "desc": "uno_method"
+    }
+}
