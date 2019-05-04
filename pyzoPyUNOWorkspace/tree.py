@@ -10,6 +10,7 @@ import pyzo
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
 from .utils import splitName, splitNameCleaner, joinName
 
+
 # Constants
 WORKSPACE_INIT = os.path.abspath(getsourcefile(lambda: 0))
 WORKSPACE_DIR = os.path.dirname(WORKSPACE_INIT)
@@ -25,14 +26,23 @@ FORUM_SUFIX = config.get("GENERAL", "forum_sufix")
 SNIPPET_PATH = config.get("GENERAL", "snippet_path")
 SNIPPET_SUFIX = config.get("GENERAL", "snippet_sufix")
 
+# print("**********************")
+# print("WORKSPACE_INIT = " + WORKSPACE_INIT)
+# print("WORKSPACE_DIR = " + WORKSPACE_DIR)
+# print("CONF_FILE = " + CONF_FILE)
+# print("UNODOC_DB = " + UNODOC_DB)
+
+# print("FORUM_PATH = " + FORUM_PATH)
+# print("FORUM_SUFIX = " + FORUM_SUFIX)
+# print("SNIPPET_PATH = " + SNIPPET_PATH)
+# print("SNIPPET_SUFIX = " + SNIPPET_SUFIX)
+
 # connect documentation database
 conn = sqlite3.connect(UNODOC_DB)
 
 # JSON serialization paths
 RESULTFILE = "result.txt"
 RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
-# Checked items
-checked_dict = {}
 
 
 def formatReference(signature, description, bold=[]):
@@ -50,16 +60,25 @@ def formatReference(signature, description, bold=[]):
         signature = signature.replace(
             r, '<span style="font-weight:bold;color:red">{}</span>'.format(r)
         )
+
     # format description
     description = description.replace("&newline&&newline&", "<p></p>")
     description = description.replace("&newline&", "<p></p>")
     # bold
-    for d in ["Parameters", "Exceptions", "See also", "Returns"]:
+    for d in ["Parameters", "Exceptions", "Returns", "Enumerator"]:
         description = re.sub(
             r"\b{}\b".format(d),
             "<p style='font-weight:bold'>{}</p>".format(d),
             description,
         )
+    # bold blue
+    for d in ["See also", "See Also", "Reference"]:
+        description = re.sub(
+            r"\b{}\b".format(d),
+            "<p style='font-weight:bold;color:blue'>{}</p>".format(d),
+            description,
+        )
+
     # bold red
     for w in ["Deprecated", "Attention"]:
         description = re.sub(
@@ -135,7 +154,7 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         shell = pyzo.shells.getCurrentShell()
         if shell:
             # via unoinspect
-            if not self._name:   #tr(self._name) == "":
+            if not self._name:  # tr(self._name) == "":
                 pass
             else:
                 shell.executeCommand(
@@ -181,7 +200,6 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
             # via pyzo
             future = shell._request.dir2(self._name)
             future.add_done_callback(self.processResponse)
-
 
     def processResponse(self, future):
         """ processResponse(response)
@@ -232,6 +250,9 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         self.old_item = ""
         self._name_item = ""
 
+        # Checked items
+        self.checked_dict = {}
+
         # tree selected item
         self._tree_name = ""
         self._tree_type = ""
@@ -279,12 +300,12 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # menu items
         workspace_menu = [
-            "Show namespace",
-            "Show help",
-            "Delete",
+            # "Show namespace",
+            # "Delete",
+            "Copy",
             "sep",
-            "Search in forum",
-            "Search in snippets",
+            "Open Office Forum Search",
+            "Open Office Snippets Search",
             "sep",
             "Check",
             "Unmark",
@@ -317,44 +338,48 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         ob = ".".join(search[:-1])
         search = search[-1]
 
-        if "Show namespace" in req:
-            # Go deeper
-            self.onItemExpand(action._item)
+        # if "Show namespace" in req:
+        #     # Go deeper
+        #     self.onItemExpand(action._item)
 
-        elif "Show help" in req:
-            # Show help in help tool (if loaded)
-            hw = pyzo.toolManager.getTool("pyzointeractivehelp")
-            if hw:
-                hw.setObjectName(action._objectName)
+        # if "Show help" in req:
+        #     # Show help in help tool (if loaded)
+        #     hw = pyzo.toolManager.getTool("pyzointeractivehelp")
+        #     if hw:
+        #         hw.setObjectName(action._objectName)
+
+        if "Copy" in req:
+            sys_clip = QtWidgets.QApplication.clipboard()
+            sys_clip.setText(search)
 
         # ------- PyUNO ----------------
 
-        elif "Search in forum" in req:
+        elif "Open Office Forum Search" in req:
             # Search in forum
             url = FORUM_PATH + search + FORUM_SUFIX
             webbrowser.open(url)
 
-        elif "Search in snippets" in req:
+        elif "Open Office Snippets Search" in req:
             # Search in forum snippets
             url = SNIPPET_PATH + search + SNIPPET_SUFIX
             webbrowser.open(url)
 
         elif "Check" in req:
             # Check item
-            if ob in checked_dict:
-                if search not in checked_dict[ob]:
-                    checked_dict[ob].append(search)
+            if ob in self.checked_dict:
+                if search not in self.checked_dict[ob]:
+                    self.checked_dict[ob].append(search)
                     self.parent().onRefreshPress()
             else:
-                checked_dict[ob] = []
-                checked_dict[ob].append(search)
+                self.checked_dict[ob] = []
+                self.checked_dict[ob].append(search)
                 self.parent().onRefreshPress()
 
         elif "Unmark" in req:
             # Uncheck item
-            if ob in checked_dict:
-                if search in checked_dict[ob]:
-                    checked_dict[ob].remove(search)
+            if ob in self.checked_dict:
+                if search in self.checked_dict[ob]:
+                    self.checked_dict[ob].remove(search)
 
             self.parent().onRefreshPress()
 
@@ -450,7 +475,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         line = self.parent()._line
         line.setText(self._proxy._name)
 
-        if self._proxy._name in checked_dict:
+        if self._proxy._name in self.checked_dict:
             bChecked = True
 
         # Fill widgets
@@ -481,10 +506,10 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 continue
             if name.startswith("_") and "private" in self._config.hideTypes:
                 continue
-            if name == 'ImplementationName':
+            if name == "ImplementationName":
                 self.parent()._impl_name.setText(rep)
-            if rep.startswith('pyuno object ('):
-                rep = 'pyuno object'
+            if rep.startswith("pyuno object ("):
+                rep = "pyuno object"
 
             # Create item
             item = PyUNOWorkspaceItem([name, typ, rep], 0)
@@ -493,7 +518,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
             # Set background color for checked items
             if bChecked:
-                if name in checked_dict[self._proxy._name]:
+                if name in self.checked_dict[self._proxy._name]:
                     item.setBackground(0, QtGui.QColor(224, 224, 224))
                     item.setBackground(1, QtGui.QColor(224, 224, 224))
                     item.setBackground(2, QtGui.QColor(224, 224, 224))
@@ -535,14 +560,14 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         find = str(items.data(0, 0))
 
         try:
-            kind = str(self._proxy._uno_dict[find]['desc'])
+            kind = str(self._proxy._uno_dict[find]["desc"])
             # find in UNO or Python documentation
-            if kind.startswith('uno'):
+            if kind.startswith("uno"):
                 # UNO
                 self.unoDescriptions(find)
             else:
                 # Python
-                find = self.parent()._line.text() + '.' + find
+                find = self.parent()._line.text() + "." + find
                 self.queryDoc(find)
         except:
             pass
@@ -562,32 +587,48 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         # Process future
         if future.cancelled():
-            #print('Introspect cancelled') # No living kernel
+            # print('Introspect cancelled') # No living kernel
             return
         elif future.exception():
-            print('Introspect-queryDoc-exception: ', future.exception())
+            print("Introspect-queryDoc-exception: ", future.exception())
             return
         else:
             response = future.result()
             if not response:
                 return
-        response_txt = str(response).split('\n')
-        name = self._name_item.split('.')
+        response_txt = str(response).split("\n")
+        name = self._name_item.split(".")
 
-        n=0
-        txt = ''
-        start = (self._name_item + '(', name[-1], 'bool(', 'bytes(', 'dict(', 'int(', 'list(', 'str(', 'tuple(', )
+        n = 0
+        txt = ""
+        start = (
+            self._name_item + "(",
+            name[-1],
+            "bool(",
+            "bytes(",
+            "dict(",
+            "int(",
+            "list(",
+            "str(",
+            "tuple(",
+        )
         for i, des in enumerate(response_txt):
             if i == 0:
                 if name[-1] in des:
-                    des = des.replace(name[-1], '<span style="font-weight:bold;">{}</span>'.format(name[-1])
-        )
+                    des = des.replace(
+                        name[-1],
+                        '<span style="font-weight:bold;">{}</span>'.format(
+                            name[-1]
+                        ),
+                    )
 
-                res = "<p style = 'background-color: palegreen'>{}</p>".format(des)
+                res = "<p style = 'background-color: palegreen'>{}</p>".format(
+                    des
+                )
             elif des.startswith(start):
                 res = "<strong>{}</strong>".format(des)
             else:
-                res = des + '\n'
+                res = des + "\n"
 
             res = "<p>{}</p>".format(res)
 
@@ -607,7 +648,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         cur = conn.cursor()
         cur.execute(
-            "SELECT signature, description FROM UNOtable WHERE name=? OR name =?",
+            "SELECT signature, description, reference FROM UNOtable WHERE name=? OR name =?",
             (find, getfind),
         )
         rows = cur.fetchall()
@@ -619,8 +660,8 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             ok_counter = 0
             good = ""
             bad = ""
-            for sig, desc in rows:
-
+            for sig, desc, ref in rows:
+                desc = desc + "&newline&Reference &newline&" + ref
                 sig, desc = formatReference(sig, desc, bold=[find, getfind])
 
                 # signature color
@@ -641,7 +682,9 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                     ok_counter += 1
                     sig_OK = True
 
-                elif self._tree_repr == "pyuno object" and sig.startswith("com.sun.star" + self._tree_type):
+                elif self._tree_repr == "pyuno object" and sig.startswith(
+                    "com.sun.star" + self._tree_type
+                ):
                     # if param is OK, color green
                     sig = "<p style = 'background-color: palegreen'>{}</p>".format(
                         sig
