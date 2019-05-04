@@ -370,6 +370,8 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         from .tree import conn, formatReference
 
         self._description.clear()
+        self._desc_counter.setText("0")
+        self._desc_all_items.setText("0")
 
         search = self._search_line.text()
         if search:
