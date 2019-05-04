@@ -46,6 +46,15 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         style = QtWidgets.qApp.style()
 
+        #
+        self.initText = "<p>{}</p>".format(
+            "Click an item in the list for Help information."
+        )
+
+        # Create empty label
+        self._empty = QtWidgets.QLabel(self)
+        self._empty.setText("")
+
         # ----- Layout 1 -----
 
         # Create Home tool button
@@ -153,13 +162,9 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self.argument_tip = 'Add argument and duble clik on method.\nExamples:\n"NAME" = object.getByName("NAME"),\n 0 = object.getByIndex(0),\n [space] = object.getMethod( )'
         self._argument_line.setToolTip(self.argument_tip)
 
-        # Create "info_label" label
-        # self._info_label = QtWidgets.QLabel(self)
-        # self._info_label.setText("")
-
         # Show hiden widget button
         self._btn_toggle = QtWidgets.QToolButton(self)
-        self._btn_toggle.setText('Show Help')
+        self._btn_toggle.setText("Show Help")
         self._btn_toggle.setCheckable(True)
         self._btn_toggle.setChecked(False)
 
@@ -168,18 +173,9 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._impl_name.setToolTip("Implementation name")
         self._impl_name.setStyleSheet("QLabel { background:#ddd; }")
 
-        # General Option
-        # self._option_label = QtWidgets.QLabel(self)
-        # self._option_label.setText(" Options: ")
-        # #
-        # self._option_save = QtWidgets.QToolButton(self)
-        # self._option_save.setText("Save")
-        # self._option_save.setToolTip("Save all options")
-
         # ----- Layout 5 -----
 
         # Create description widget - Help hidden widget
-
 
         # ----- Layout 6 -----
 
@@ -196,6 +192,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._search_line = QtWidgets.QLineEdit(self)
         self._search_line.setReadOnly(False)
         self._search_line.setToolTip("Search")
+        self._search_line.setPlaceholderText("UNO API Search...")
+        #
+        self._match = QtWidgets.QCheckBox(self)
+        self._match.setText("Match")
+        self._match.setChecked(True)
+        self._match.setToolTip("Match")
         #
         self._search = QtWidgets.QToolButton(self)
         self._search.setIconSize(QtCore.QSize(16, 16))
@@ -222,10 +224,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # ----- Layout 7 -----
 
         self._description = QtWidgets.QTextBrowser(self)
-        initText = """
-        Clik on property or method.
-        """
-        self._description.setText(initText)
+        self._description.setText(self.initText)
 
         # ------ Set layouts
 
@@ -273,8 +272,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_6 = QtWidgets.QHBoxLayout()
         layout_6.addWidget(self._desc_counter, 0)
         layout_6.addWidget(self._desc_of, 0)
-        layout_6.addWidget(self._desc_all_items, 1)
-        layout_6.addWidget(self._search_line, 1)
+        layout_6.addWidget(self._desc_all_items, 0)
+        layout_6.addWidget(self._empty, 0)
+        layout_6.addWidget(self._search_line, 0)
+        layout_6.addWidget(self._empty, 0)
+        layout_6.addWidget(self._match, 0)
         layout_6.addWidget(self._search, 0)
         layout_6.addWidget(self._clear, 0)
         layout_6.addWidget(self._font_options, 0)
@@ -287,7 +289,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # layout_7.addStretch(1)
         layout_7.setSpacing(0)
         layout_7.setContentsMargins(0, 0, 0, 0)
-
 
         # Main Layout
         mainLayout = QtWidgets.QVBoxLayout(self)
@@ -349,19 +350,17 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         if self._btn_toggle.isChecked():
             self._description_widget.setVisible(True)
-            self._btn_toggle.setText('Close Help')
+            self._btn_toggle.setText("Close Help")
         else:
             self._description_widget.setVisible(False)
-            self._btn_toggle.setText('Show Help')
+            self._btn_toggle.setText("Show Help")
             if self._description.toPlainText() == "":
-                initText = """
-                Clik on property or method.
-                """
-                self._description.setText(initText)
+                self._description.setText(self.initText)
 
     def onClearPress(self):
         """ Remove results """
-        self._description.clear()
+        # self._description.clear()
+        self._description.setText(self.initText)
         self._search_line.setText("")
         self._desc_counter.setText("0")
         self._desc_all_items.setText("0")
@@ -375,19 +374,32 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         search = self._search_line.text()
         if search:
             cur = conn.cursor()
-            cur.execute(
-                "SELECT signature, description FROM UNOtable WHERE  name like ?",
-                ("%" + search + "%",),
-            )
+
+            if self._match.isChecked() == True:
+                cur.execute(
+                    "SELECT signature, description, reference FROM UNOtable WHERE  name=?",
+                    [search],
+                )
+            else:
+                cur.execute(
+                    "SELECT signature, description, reference FROM UNOtable WHERE  name like ?",
+                    ("%" + search + "%",),
+                )
             rows = cur.fetchall()
-            for sig, desc in rows:
+            res = ""
+            n = 0
+            self._desc_all_items.setText(str(n))
+            for sig, desc, ref in rows:
+                desc = desc + "&newline&Reference &newline&" + ref
                 sig, desc = formatReference(sig, desc, bold=[search])
                 sig = "<p style = 'background-color: lightgray'>{}</p>".format(
                     sig
                 )
-                res = sig + desc
+                res = res + sig + desc
+                n += 1
 
             self._description.setText(res)
+            self._desc_all_items.setText(str(n))
 
     def onHomePress(self):
         """ Back to start """
@@ -488,11 +500,10 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
                     self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
                 else:
                     self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
-
             # Checked
             if radiobox.text() == "Checked" and radiobox.isChecked() is True:
-                if self._line.text() in checked_dict:
-                    if name in checked_dict[self._line.text()]:
+                if self._line.text() in self._tree.checked_dict:
+                    if name in self._tree.checked_dict[self._line.text()]:
                         self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
                     else:
                         self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
@@ -608,11 +619,3 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             self._description.setFont(QtGui.QFont(font))
 
         self._description.updateGeometries()
-
-    # def onSaveOptionsInConf(self):
-    #     """ Save options in configuration file. """
-    #
-    #     config.set('GENERAL', 'dash', str(self._dash.isChecked()))
-    #
-    #     with open(conf_file, 'w') as configfile:
-    #         config.write(configfile)
