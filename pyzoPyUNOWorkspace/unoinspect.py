@@ -20,24 +20,27 @@
 
 
 from json import dump
-import pickle
 from inspect import getsourcefile
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, realpath
 
 import uno
-from com.sun.star.beans.MethodConcept import \
-    ALL as _METHOD_CONCEPT_ALL
-from com.sun.star.beans.PropertyConcept import \
-    ALL as _PROPERTY_CONCEPT_ALL
-from com.sun.star.reflection.ParamMode import \
-    IN as _PARAM_MODE_IN, \
-    OUT as _PARAM_MODE_OUT, \
-    INOUT as _PARAM_MODE_INOUT
+from com.sun.star.beans.MethodConcept import ALL as _METHOD_CONCEPT_ALL
+from com.sun.star.beans.PropertyConcept import ALL as _PROPERTY_CONCEPT_ALL
+from com.sun.star.reflection.ParamMode import (
+    IN as _PARAM_MODE_IN,
+    OUT as _PARAM_MODE_OUT,
+    INOUT as _PARAM_MODE_INOUT,
+)
 
 _PATH = abspath(getsourcefile(lambda: 0))
 # output file path
 _DIR = dirname(_PATH)
-_RESULTFILE = 'result.txt'
+_RESULTFILE = "result.txt"
+
+# print('**********************')
+# print('_PATH = ' + _PATH)
+# print('_DIR = ' + _DIR)
+# print('_RESULTFILE = ' + _RESULTFILE)
 
 
 def _mode_to_str(mode):
@@ -60,6 +63,7 @@ class Inspector:
     """Object introspection
 
     """
+
     def __init__(self):
 
         try:
@@ -68,10 +72,15 @@ class Inspector:
             print(err)
 
         self.smgr = self.ctx.ServiceManager
-        self.introspection = self.ctx.getValueByName("/singletons/com.sun.star.beans.theIntrospection")
-        self.reflection = self.ctx.getValueByName("/singletons/com.sun.star.reflection.theCoreReflection")
-        self.documenter = self.ctx.getValueByName('/singletons/com.sun.star.util.theServiceDocumenter')
-
+        self.introspection = self.ctx.getValueByName(
+            "/singletons/com.sun.star.beans.theIntrospection"
+        )
+        self.reflection = self.ctx.getValueByName(
+            "/singletons/com.sun.star.reflection.theCoreReflection"
+        )
+        self.documenter = self.ctx.getValueByName(
+            "/singletons/com.sun.star.util.theServiceDocumenter"
+        )
 
     def _inspectProperties(self, object):
         """Inspect properties
@@ -91,7 +100,7 @@ class Inspector:
                     p_name = str(property.Name)
                     P[p_name] = {}
                     # description
-                    P[p_name]['desc'] = 'uno_property'
+                    P[p_name]["desc"] = "uno_property"
 
                     # type
                     typ = str(property.Type.typeName)
@@ -99,37 +108,46 @@ class Inspector:
                     # repr
                     if hasattr(object, p_name):
                         prop_value = getattr(object, p_name, None)
-                        if typ in ['[]string', '[]type', '[]com.sun.star.datatransfer.DataFlavor', '[]com.sun.star.sheet.opencl.OpenCLPlatform']:
-                            t = '<tuple with {} elements>'.format(str(len(prop_value)))
-                            typ = 'tuple'
+                        if typ in [
+                            "[]string",
+                            "[]type",
+                            "[]com.sun.star.datatransfer.DataFlavor",
+                            "[]com.sun.star.sheet.opencl.OpenCLPlatform",
+                        ]:
+                            t = "<tuple with {} elements>".format(
+                                str(len(prop_value))
+                            )
+                            typ = "tuple"
                         elif typ in ["[]com.sun.star.beans.PropertyValue"]:
-                            t = '<tuple with {} elements>'.format(str(len(prop_value)))
-                            typ = '.beans.PropertyValue'
-                        elif str(prop_value).startswith('pyuno object'):
-                            t = 'pyuno object'
-                        elif typ == 'string':
+                            t = "<tuple with {} elements>".format(
+                                str(len(prop_value))
+                            )
+                            typ = ".beans.PropertyValue"
+                        elif str(prop_value).startswith("pyuno object"):
+                            t = "pyuno object"
+                        elif typ == "string":
                             # if prop_value not in ['True', 'False', 'None']:
                             t = "'{}'".format(prop_value)
-                        elif typ == 'boolean' and prop_value == 0:
-                            t = 'None'
+                        elif typ == "boolean" and prop_value == 0:
+                            t = "None"
                         else:
                             t = str(prop_value)
 
                     else:
-                        t = '<unknown>'
+                        t = "<unknown>"
 
-                    typ = typ.replace('com.sun.star', '')
+                    typ = typ.replace("com.sun.star", "")
 
-                    P[p_name]['type'] = typ
-                    P[p_name]['repr'] = t
-                    P[p_name]['items'] = []
+                    P[p_name]["type"] = typ
+                    P[p_name]["repr"] = t
+                    P[p_name]["items"] = []
 
                 except Exception as err:
 
-                    P[p_name]['type'] = typ
-                    P[p_name]['repr'] = '<unknown>'
+                    P[p_name]["type"] = typ
+                    P[p_name]["repr"] = "<unknown>"
                     all_items = []
-                    P[p_name]['items'] = all_items
+                    P[p_name]["items"] = all_items
         except:
             pass
 
@@ -156,40 +174,42 @@ class Inspector:
                 try:
                     M[m_name] = {}
                     # description
-                    M[m_name]['desc'] = 'uno_method'
+                    M[m_name]["desc"] = "uno_method"
                     # type
                     typ = str(method.getReturnType().getName())
-                    typ = typ.replace('com.sun.star', '')
-                    M[m_name]['type'] = typ
+                    typ = typ.replace("com.sun.star", "")
+                    M[m_name]["type"] = typ
 
                     all_items = []
                     # name access
-                    if m_name == 'getByName':
+                    if m_name == "getByName":
                         items = object.getElementNames()
                         # escape bytes
                         for item in items:
                             all_items.append(str(item))
-                        M[m_name]['items'] = sorted(all_items)
+                        M[m_name]["items"] = sorted(all_items)
 
                     # index access
-                    elif m_name == 'getByIndex':
+                    elif m_name == "getByIndex":
                         items = object.getCount()
-                        M[m_name]['items'] = [str(item) for item in range(0, items)]
+                        M[m_name]["items"] = [
+                            str(item) for item in range(0, items)
+                        ]
 
                     # supported services
-                    elif m_name == 'getSupportedServiceNames':
+                    elif m_name == "getSupportedServiceNames":
                         items = object.getSupportedServiceNames()
-                        M[m_name]['items'] = sorted(items)
+                        M[m_name]["items"] = sorted(items)
 
                     # enumerate
-                    elif m_name == 'createEnumeration':
+                    elif m_name == "createEnumeration":
                         idx = len(list(object))
                         all_items.append(str(idx))
-                        M[m_name]['items'] = all_items
+                        M[m_name]["items"] = all_items
 
                     else:
                         # pass
-                        M[m_name]['items'] = all_items
+                        M[m_name]["items"] = all_items
 
                     # repr
                     args = method.ParameterTypes
@@ -198,7 +218,15 @@ class Inspector:
                     params = "( "
                     for i in range(0, len(args)):
 
-                        params = params + _mode_to_str(infos[i].aMode) + " " + str(args[i].Name) + " " + str(infos[i].aName) + ", "
+                        params = (
+                            params
+                            + _mode_to_str(infos[i].aMode)
+                            + " "
+                            + str(args[i].Name)
+                            + " "
+                            + str(infos[i].aName)
+                            + ", "
+                        )
 
                     params = params + ")"
                     params = params.replace(", )", " )")
@@ -206,14 +234,13 @@ class Inspector:
                     if params == "()":
                         params = "()"
 
-                    M[m_name]['repr'] = str(params)
-
+                    M[m_name]["repr"] = str(params)
 
                 except Exception as err:
-                    M[m_name]['type'] = 'ERROR'
-                    M[m_name]['repr'] = str(err)
+                    M[m_name]["type"] = "ERROR"
+                    M[m_name]["repr"] = str(err)
                     all_items = []
-                    M[p_name]['items'] = all_items
+                    M[p_name]["items"] = all_items
 
         except:
             pass
@@ -233,42 +260,42 @@ class Inspector:
         try:
 
             for name in dir(object):
-                if name.startswith('__'):
+                if name.startswith("__"):
                     continue
 
-                atr = getattr(object,name)
+                atr = getattr(object, name)
 
                 # name
                 S[name] = {}
 
                 # description
-                S[name]['desc'] = 'python'
+                S[name]["desc"] = "python"
 
                 # type
                 typ = str(type(atr))
-                typ = typ. replace('<class ', '').replace('>', "")
-                typ =typ.replace("'", "")
+                typ = typ.replace("<class ", "").replace(">", "")
+                typ = typ.replace("'", "")
 
                 # repr
                 if typ == "dict":
-                    t = '<dict with {} elements>'.format(str(len(repr(atr))))
+                    t = "<dict with {} elements>".format(str(len(repr(atr))))
                 else:
                     t = repr(atr)
 
-                S[name]['type'] = typ
-                S[name]['repr'] = t
+                S[name]["type"] = typ
+                S[name]["repr"] = t
                 all_items = []
-                S[name]['items'] = all_items
+                S[name]["items"] = all_items
 
         except:
-                S[name]['type'] = 'ERROR'
-                S[name]['repr'] = ''
-                all_items = []
-                S[name]['items'] = all_items
+            S[name]["type"] = "ERROR"
+            S[name]["repr"] = ""
+            all_items = []
+            S[name]["items"] = all_items
 
         return S
 
-    def inspect(self, object, output='json'):
+    def inspect(self, object, output="json"):
         """Inspect object
         :param object:  Inspect this object
         :param output:  'console': display result in terminal
@@ -299,23 +326,23 @@ class Inspector:
                     context.update(sorted(s.items()))
 
         # display result in terminal
-        if type == 'console':
+        if type == "console":
             for key, value in sorted(context.items()):
                 # print('KEY: ' + str(key))
                 # print('VALUE: ' + str(value))
                 for tp, rep in value.items():
-                    t = context[key]['type']
-                    r = context[key]['repr']
-                print('{:<35}'.format(key) + '{:<35}'.format(t) + r)
+                    t = context[key]["type"]
+                    r = context[key]["repr"]
+                print("{:<35}".format(key) + "{:<35}".format(t) + r)
 
         # return dict
-        elif type == 'dict':
+        elif type == "dict":
             return context
 
         # store result in json file
-        elif output == 'json':
+        elif output == "json":
             file_path = join(_DIR, _RESULTFILE)
-            with open(file_path, 'w') as outfile:
+            with open(file_path, "w") as outfile:
                 dump(context, outfile, indent=4)
 
     def showServiceDocs(self, object):
