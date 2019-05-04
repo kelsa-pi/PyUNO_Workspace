@@ -3,6 +3,7 @@
 from re import findall
 from os.path import join
 
+
 def splitName(name):
     """ splitName(name)
     Split an object name in parts, taking dots and indexing into account.
