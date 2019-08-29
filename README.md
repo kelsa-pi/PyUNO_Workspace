@@ -43,5 +43,5 @@ For more information see [documenation](https://github.com/kelsa-pi/PyUNO_Worksp
 BSD
 
 ## Status
-Release Candidate 2 - Feature complete and stable enough to be usable for day-to-day work.
+Release Candidate 3 - Feature complete and stable enough to be usable for day-to-day work.
 
