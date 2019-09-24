@@ -38,7 +38,12 @@ def splitNameCleaner(name):
         np = [p for p in parts if p]
 
     # Fix list
-    if np[0].startswith("list(") and np[-1].endswith(")"):
+    if np[0].startswith("list(list(") and np[-1].endswith(")"):
+        np[0] = np[0].replace("list(list(", "list(")
+        np[-1] = np[-1][:-1]
+        np.append(np[-1])
+
+    elif np[0].startswith("list(") and np[-1].endswith(")"):
         np[0] = np[0].replace("list(", "")
         np[-1] = np[-1][:-1]
         np.append(np[-1])

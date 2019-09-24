@@ -18,7 +18,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-
+import argparse
 from json import dump
 from inspect import getsourcefile
 from os.path import abspath, dirname, join, realpath
@@ -75,6 +75,7 @@ class Inspector:
         self.introspection = self.ctx.getValueByName(
             "/singletons/com.sun.star.beans.theIntrospection"
         )
+
         self.reflection = self.ctx.getValueByName(
             "/singletons/com.sun.star.reflection.theCoreReflection"
         )
@@ -92,64 +93,58 @@ class Inspector:
         P = {}
         try:
             inspector = self.introspection.inspect(object)
-            # properties
             properties = inspector.getProperties(_PROPERTY_CONCEPT_ALL)
-            for property in properties:
-                try:
-                    # name
-                    p_name = str(property.Name)
-                    P[p_name] = {}
-                    # description
-                    P[p_name]["desc"] = "uno_property"
-
-                    # type
-                    typ = str(property.Type.typeName)
-
-                    # repr
-                    if hasattr(object, p_name):
-                        prop_value = getattr(object, p_name, None)
-                        if typ in [
-                            "[]string",
-                            "[]type",
-                            "[]com.sun.star.datatransfer.DataFlavor",
-                            "[]com.sun.star.sheet.opencl.OpenCLPlatform",
-                        ]:
-                            t = "<tuple with {} elements>".format(
-                                str(len(prop_value))
-                            )
-                            typ = "tuple"
-                        elif typ in ["[]com.sun.star.beans.PropertyValue"]:
-                            t = "<tuple with {} elements>".format(
-                                str(len(prop_value))
-                            )
-                            typ = ".beans.PropertyValue"
-                        elif str(prop_value).startswith("pyuno object"):
-                            t = "pyuno object"
-                        elif typ == "string":
-                            # if prop_value not in ['True', 'False', 'None']:
-                            t = "'{}'".format(prop_value)
-                        elif typ == "boolean" and prop_value == 0:
-                            t = "None"
-                        else:
-                            t = str(prop_value)
-
-                    else:
-                        t = "<unknown>"
-
-                    typ = typ.replace("com.sun.star", "")
-
-                    P[p_name]["type"] = typ
-                    P[p_name]["repr"] = t
-                    P[p_name]["items"] = []
-
-                except Exception as err:
-
-                    P[p_name]["type"] = typ
-                    P[p_name]["repr"] = "<unknown>"
-                    all_items = []
-                    P[p_name]["items"] = all_items
         except:
-            pass
+            return P
+
+        for property in properties:
+
+            # name
+            p_name = str(property.Name)
+            try:
+                P[p_name] = {}
+                # description
+                P[p_name]["desc"] = "uno_property"
+
+                # type
+                typ = str(property.Type.typeName)
+
+                # repr
+                if hasattr(object, p_name):
+                    prop_value = getattr(object, p_name, None)
+
+                    # tuple
+                    if typ.startswith(
+                        ("[]string", "[]type", "[]com", "[][]double")
+                    ):
+                        t = "<tuple with {} elements>".format(
+                            str(len(prop_value))
+                        )
+                    # pyuno object
+                    elif str(prop_value).startswith("pyuno object"):
+                        t = "pyuno object"
+                    # string
+                    elif typ == "string":
+                        t = "'{}'".format(prop_value)
+                    # bool
+                    elif typ == "boolean" and prop_value == 0:
+                        t = "False"
+                    else:
+                        t = str(prop_value)
+                        t = t.replace("\n", "'\n'")
+                else:
+                    t = "<unknown>"
+
+                typ = typ.replace("com.sun.star.", "~ ")
+
+                P[p_name]["type"] = typ
+                P[p_name]["repr"] = (t[:120] + "..") if len(t) > 120 else t
+                P[p_name]["items"] = []
+
+            except Exception as err:
+                P[p_name]["type"] = typ
+                P[p_name]["repr"] = "< unknown p: " + str(err) + " >"
+                P[p_name]["items"] = []
 
         return P
 
@@ -161,93 +156,94 @@ class Inspector:
         """
 
         M = {}
-
+        m_name = "ERROR"
         try:
             inspector = self.introspection.inspect(object)
-
-            # methods
             methods = inspector.getMethods(_METHOD_CONCEPT_ALL)
-            for method in methods:
-
-                # name
-                m_name = str(method.Name)
-                try:
-                    M[m_name] = {}
-                    # description
-                    M[m_name]["desc"] = "uno_method"
-                    # type
-                    typ = str(method.getReturnType().getName())
-                    typ = typ.replace("com.sun.star", "")
-                    M[m_name]["type"] = typ
-
-                    all_items = []
-                    # name access
-                    if m_name == "getByName":
-                        items = object.getElementNames()
-                        # escape bytes
-                        for item in items:
-                            all_items.append(str(item))
-                        M[m_name]["items"] = sorted(all_items)
-
-                    # index access
-                    elif m_name == "getByIndex":
-                        items = object.getCount()
-                        M[m_name]["items"] = [
-                            str(item) for item in range(0, items)
-                        ]
-
-                    # supported services
-                    elif m_name == "getSupportedServiceNames":
-                        items = object.getSupportedServiceNames()
-                        M[m_name]["items"] = sorted(items)
-
-                    # enumerate
-                    elif m_name == "createEnumeration":
-                        idx = len(list(object))
-                        all_items.append(str(idx))
-                        M[m_name]["items"] = all_items
-
-                    else:
-                        # pass
-                        M[m_name]["items"] = all_items
-
-                    # repr
-                    args = method.ParameterTypes
-                    infos = method.ParameterInfos
-
-                    params = "( "
-                    for i in range(0, len(args)):
-
-                        params = (
-                            params
-                            + _mode_to_str(infos[i].aMode)
-                            + " "
-                            + str(args[i].Name)
-                            + " "
-                            + str(infos[i].aName)
-                            + ", "
-                        )
-
-                    params = params + ")"
-                    params = params.replace(", )", " )")
-
-                    if params == "()":
-                        params = "()"
-
-                    M[m_name]["repr"] = str(params)
-
-                except Exception as err:
-                    M[m_name]["type"] = "ERROR"
-                    M[m_name]["repr"] = str(err)
-                    all_items = []
-                    M[p_name]["items"] = all_items
-
         except:
-            pass
+            return M
+
+        for method in methods:
+            # name
+            m_name = str(method.Name)
+            try:
+                M[m_name] = {}
+                # description
+                M[m_name]["desc"] = "uno_method"
+                # type
+                typ = str(method.getReturnType().getName())
+                typ = typ.replace("com.sun.star.", "~ ")
+                M[m_name]["type"] = typ
+
+                all_items = []
+                # name access
+                if m_name == "getByName":
+                    # if hasattr(object, 'getElementNames'):
+                    items = object.getElementNames()
+                    # escape bytes
+                    for item in items:
+                        all_items.append(str(item))
+                    M[m_name]["items"] = sorted(all_items)
+
+                # index access
+                elif m_name == "getByIndex":
+                    # if hasattr(object, 'getCount'):
+                    items = object.getCount()
+                    M[m_name]["items"] = [str(item) for item in range(0, items)]
+
+                # supported services
+                elif m_name == "getSupportedServiceNames":
+                    items = object.getSupportedServiceNames()
+                    M[m_name]["items"] = sorted(items)
+
+                # enumerate
+                elif m_name == "createEnumeration":
+                    enm = object.createEnumeration()
+                    e = 0
+                    while enm.hasMoreElements():
+                        value = enm.nextElement()
+                        all_items.append(str(e))
+                        e = e + 1
+                    M[m_name]["items"] = sorted(all_items)
+                else:
+                    # pass
+                    M[m_name]["items"] = all_items
+
+                # repr
+                args = method.ParameterTypes
+                infos = method.ParameterInfos
+
+                params = "( "
+                for i in range(0, len(args)):
+
+                    params = (
+                        params
+                        + _mode_to_str(infos[i].aMode)
+                        + " "
+                        + str(args[i].Name)
+                        + " "
+                        + str(infos[i].aName)
+                        + ", "
+                    )
+
+                params = params + ")"
+                params = params.replace(", )", " )")
+
+                if params == "()":
+                    params = "()"
+
+                M[m_name]["repr"] = str(params)
+            except Exception as err:
+                # M[m_name] = {}
+                M[m_name]["type"] = "ERROR"
+                M[m_name]["repr"] = "< unknown m: " + str(err) + " >"
+                M[m_name]["items"] = []
+        # except:
+        # pass
 
         return M
 
-    def _inpectPython(self, object):
+    def _inspectPython(self, object):
 
         """Inspect standard Python
 
@@ -256,7 +252,7 @@ class Inspector:
         """
 
         S = {}
-
+        name = "ERROR"
         try:
 
             for name in dir(object):
@@ -288,12 +284,36 @@ class Inspector:
                 S[name]["items"] = all_items
 
         except:
-            S[name]["type"] = "ERROR"
-            S[name]["repr"] = ""
-            all_items = []
-            S[name]["items"] = all_items
+            pass
 
         return S
+
+    def _inspectPropertyValue(self, object):
+        V = {}
+        if isinstance(object, (list, tuple)):
+            try:
+                for idx, item in enumerate(object):
+                    idx = "[" + str(idx) + "]"
+                    typ = str(type(item))
+                    typ = typ.replace("<class ", "").replace(">", "")
+                    typ = typ.replace("__main__.", "").replace(
+                        "pyzokernel.introspection.", ""
+                    )
+                    typ = typ.replace("'", "")
+                    t = str(item)
+                    t = t.replace("(com.sun.star.beans.PropertyValue)", "")
+                    if t.startswith("pyuno object"):
+                        t = item.ImplementationName
+                    #
+                    V[idx] = {}
+                    V[idx]["desc"] = "uno_property"
+                    V[idx]["type"] = typ
+                    V[idx]["repr"] = t
+                    V[idx]["items"] = []
+            except:
+                pass
+
+        return V
 
     def inspect(self, object, output="json"):
         """Inspect object
@@ -313,20 +333,24 @@ class Inspector:
             # inspect UNO properties and methods
             p = self._inspectProperties(object)
             m = self._inspectMethods(object)
-
             # UNO object
             if p and m:
                 context.update(sorted(p.items()))
                 context.update(sorted(m.items()))
+            else:
+                v = self._inspectPropertyValue(object)
+                # print(str(v))
+                if v:
+                    context.update(sorted(v.items()))
 
             # not UNO object - try python
-            else:
-                s = self._inpectPython(object)
+            if not context:
+                s = self._inspectPython(object)
                 if s:
                     context.update(sorted(s.items()))
 
         # display result in terminal
-        if type == "console":
+        if output == "console":
             for key, value in sorted(context.items()):
                 # print('KEY: ' + str(key))
                 # print('VALUE: ' + str(value))
@@ -336,7 +360,7 @@ class Inspector:
                 print("{:<35}".format(key) + "{:<35}".format(t) + r)
 
         # return dict
-        elif type == "dict":
+        elif output == "dict":
             return context
 
         # store result in json file
@@ -362,11 +386,3 @@ class Inspector:
         """
         path = join(_DIR, _RESULTFILE)
         return path
-
-
-def main():
-    pass
-
-
-if __name__ == "__main__":
-    main()

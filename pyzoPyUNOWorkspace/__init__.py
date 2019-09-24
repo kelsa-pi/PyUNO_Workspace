@@ -9,10 +9,18 @@
 # Author: Sasa Kelecevic, 2017
 
 import re
-import sys
+import os, sys
 import pyzo
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
-from .tree import PyUNOWorkspaceTree, PyUNOWorkspaceProxy
+from .tree import (
+    PyUNOWorkspaceTree,
+    PyUNOWorkspaceProxy,
+    writeHistory,
+    readHistory,
+    getHistoryFilePath,
+    createResultFile,
+    createHistoryFile,
+)
 
 tool_name = pyzo.translate("pyzoPyUNOWorkspace", "PyUNO Workspace")
 tool_summary = (
@@ -33,19 +41,33 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # Make sure there is a configuration entry for this tool
         # The pyzo tool manager makes sure that there is an entry in
         # config.tools before the tool is instantiated.
+
         toolId = self.__class__.__name__.lower()
         self._config = pyzo.config.tools[toolId]
+
         # Set config
         if not hasattr(self._config, "hideTypes"):
             self._config.hideTypes = []
-        if not hasattr(self._config, "fontSize"):
+        #
+        if not hasattr(self._config, "fontSizeTree"):
             if sys.platform == "darwin":
-                self._config.fontSize = 12
+                self._config.fontSizeTree = 12
             else:
-                self._config.fontSize = 10
+                self._config.fontSizeTree = 10
+        if not hasattr(self._config, "fontSizeHelp"):
+            if sys.platform == "darwin":
+                self._config.fontSizeHelp = 12
+            else:
+                self._config.fontSizeHelp = 10
+        #
+        if not hasattr(self._config, "historyMaximum"):
+            self._config.historyMaximum = 10
+        if not hasattr(self._config, "historyFreeze"):
+            self._config.historyFreeze = 0
+        if not hasattr(self._config, "historyClearOnStartup"):
+            self._config.historyClearOnStartup = 1
 
         style = QtWidgets.qApp.style()
-
         #
         self.initText = "<p>{}</p>".format(
             "Click an item in the list for Help information."
@@ -70,10 +92,10 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._refresh.setToolTip("Refresh")
 
         # Create Go back tool button
-        self._up = QtWidgets.QToolButton(self)
-        self._up.setIcon(style.standardIcon(style.SP_ArrowLeft))
-        self._up.setIconSize(QtCore.QSize(16, 16))
-        self._up.setToolTip("Go back")
+        self.back = QtWidgets.QToolButton(self)
+        self.back.setIcon(style.standardIcon(style.SP_ArrowLeft))
+        self.back.setIconSize(QtCore.QSize(16, 16))
+        self.back.setToolTip("Go back")
 
         # Create "path" line edit
         self._line = QtWidgets.QLineEdit(self)
@@ -81,12 +103,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._line.setStyleSheet("QLineEdit { background:#ddd; }")
         self._line.setFocusPolicy(QtCore.Qt.NoFocus)
 
-        # Create enumerate tool button
-        self._enumerate = QtWidgets.QToolButton(self)
-        self._enumerate.setIcon(style.standardIcon(style.SP_ArrowDown))
-        self._enumerate.setIconSize(QtCore.QSize(16, 16))
-        self._enumerate.setToolTip("Enumerate")
-        self._enumerate.setEnabled(False)
+        # Create selection tool button
+        self._selection = QtWidgets.QToolButton(self)
+        self._selection.setIcon(pyzo.icons.layout)
+        self._selection.setIconSize(QtCore.QSize(16, 16))
+        self._selection.setToolTip("Get selection")
+        self._selection.setEnabled(False)
 
         # Create "insert_code" button
         self._insert_code = QtWidgets.QToolButton(self)
@@ -99,28 +121,6 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # ----- Layout 2 -----
 
-        # Create radio box All
-        self._all = QtWidgets.QRadioButton(self)
-        self._all.setText("Aa")
-        self._all.setChecked(True)
-        self._all.setToolTip("All")
-
-        # Create radio box Properties
-        self._only_p = QtWidgets.QRadioButton(self)
-        self._only_p.setText("A")
-        self._only_p.setToolTip("Uppercase")
-
-        # Create radio box Methods
-        self._only_m = QtWidgets.QRadioButton(self)
-        self._only_m.setText("a")
-        self._only_m.setToolTip("Lowercase")
-
-        # Create radio box Checked
-        self._only_star = QtWidgets.QRadioButton(self)
-        # self._only_star.setIcon(style.standardIcon(style.SP_DialogApplyButton))
-        self._only_star.setText("Checked")
-        self._only_star.setToolTip("Checked")
-
         # Create element_index combo box
         self._element_index = QtWidgets.QComboBox(self)
         self._element_index.setToolTip("Get by index")
@@ -131,6 +131,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._element_names.setToolTip("Get by name")
         self._element_names.setEnabled(False)
 
+        # Create enumerate combo box
+        self._enumerate_index = QtWidgets.QComboBox(self)
+        self._enumerate_index.setToolTip("Enumerate")
+        self._enumerate_index.setEnabled(False)
+
         # Create history combo box
         self._history = QtWidgets.QComboBox(self)
         self._history.setToolTip("History")
@@ -138,46 +143,58 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # Create options menu
         self._options = QtWidgets.QToolButton(self)
+        self._options.setToolTip("Options")
         self._options.setIcon(pyzo.icons.filter)
         self._options.setIconSize(QtCore.QSize(16, 16))
         self._options.setPopupMode(self._options.InstantPopup)
         self._options.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        # main menu
         self._options._menu = QtWidgets.QMenu()
+        # submenus
+        self.show_hide_menu = pyzo.core.menu.Menu(None, "Show/Hide")
+        #
+        self.font_size_menu = pyzo.core.menu.Menu(None, "Font size")
+        self.font_size_tree_menu = pyzo.core.menu.Menu(None, "Tree")
+        self.font_size_help_menu = pyzo.core.menu.Menu(None, "Help")
+        #
+        self.history_menu = pyzo.core.menu.Menu(None, "History")
+
+        # create menu
         self._options.setMenu(self._options._menu)
-        self.onOptionsPress()  # create menu now
+        self.onOptionsPress()
 
-        # ----- Layout 3 -----
-        # Create tree
-        self._tree = PyUNOWorkspaceTree(self)
-
-        # ----- Layout 4 -----
-
-        # Create "argument_label" label
-        self._argument_label = QtWidgets.QLabel(self)
-        self._argument_label.setText("  Arguments: ")
-
-        # Create "argument_line" line edit
-        self._argument_line = QtWidgets.QLineEdit(self)
-        self._argument_line.setReadOnly(False)
-        self.argument_tip = 'Add argument and duble clik on method.\nExamples:\n"NAME" = object.getByName("NAME"),\n 0 = object.getByIndex(0),\n [space] = object.getMethod( )'
-        self._argument_line.setToolTip(self.argument_tip)
-
-        # Show hiden widget button
+        # Show/hide Help button
         self._btn_toggle = QtWidgets.QToolButton(self)
-        self._btn_toggle.setText("Show Help")
+        self._btn_toggle.setToolTip("Show/hide help")
+        self._btn_toggle.setIcon(style.standardIcon(style.SP_DialogHelpButton))
+        self._btn_toggle.setIconSize(QtCore.QSize(16, 16))
         self._btn_toggle.setCheckable(True)
         self._btn_toggle.setChecked(False)
 
-        # Create "impl_name" line edit
-        self._impl_name = QtWidgets.QLabel(self)
-        self._impl_name.setToolTip("Implementation name")
-        self._impl_name.setStyleSheet("QLabel { background:#ddd; }")
+        # ----- Layout 3 -----
+
+        # Create tree
+        self._tree = PyUNOWorkspaceTree(self)
+
+        # Create message for when tree is empty
+        self._initText = QtWidgets.QLabel(
+            pyzo.translate(
+                "pyzoWorkspace",
+                """Lists the variables in the current shell's namespace.
+        Currently, there are none. Some of them may be hidden because of the filters you configured.""",
+            ),
+            self,
+        )
+        self._initText.setVisible(False)
+        self._initText.setWordWrap(True)
+
+        # ----- Layout 4 -----
+        # Create description widget
+
+        self._description = QtWidgets.QTextBrowser(self)
+        self._description.setText(self.initText)
 
         # ----- Layout 5 -----
-
-        # Create description widget - Help hidden widget
-
-        # ----- Layout 6 -----
 
         # Create counter
         self._desc_counter = QtWidgets.QLabel(self)
@@ -209,62 +226,35 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._clear.setText("Clear")
         self._clear.setToolTip("Clear")
 
-        # Create font options menu
-        self._font_options = QtWidgets.QToolButton(self)
-        self._font_options.setIcon(pyzo.icons.wrench)
-        self._font_options.setIconSize(QtCore.QSize(16, 16))
-        self._font_options.setPopupMode(self._options.InstantPopup)
-        self._font_options.setToolButtonStyle(
-            QtCore.Qt.ToolButtonTextBesideIcon
-        )
-        self._font_options._menu = QtWidgets.QMenu()
-        self._font_options.setMenu(self._font_options._menu)
-        self.onFontOptionsPress()  # create menu now
-
-        # ----- Layout 7 -----
-
-        self._description = QtWidgets.QTextBrowser(self)
-        self._description.setText(self.initText)
-
         # ------ Set layouts
 
         # Layout 1: Object and insert code layout
         layout_1 = QtWidgets.QHBoxLayout()
         layout_1.addWidget(self._home, 0)
         layout_1.addWidget(self._refresh, 0)
-        layout_1.addWidget(self._up, 0)
+        layout_1.addWidget(self.back, 0)
         layout_1.addWidget(self._line, 1)
-        layout_1.addWidget(self._enumerate, 0)
+        layout_1.addWidget(self._selection, 0)
         layout_1.addWidget(self._insert_code, 0)
 
         # Layout 2: Display, arguments, history and option layout
         layout_2 = QtWidgets.QHBoxLayout()
-        layout_2.addWidget(self._all, 0)
-        layout_2.addWidget(self._only_p, 0)
-        layout_2.addWidget(self._only_m, 0)
-        layout_2.addWidget(self._only_star, 0)
         layout_2.addWidget(self._element_index, 0)
         layout_2.addWidget(self._element_names, 0)
+        layout_2.addWidget(self._enumerate_index, 0)
         layout_2.addWidget(self._history, 1)
         layout_2.addWidget(self._options, 0)
+        layout_2.addWidget(self._btn_toggle, 0)
 
         # Layout 3: Tree layout
         layout_3 = QtWidgets.QVBoxLayout()
         layout_3.addWidget(self._tree, 0)
-
-        # Layout 4: Argument layout
-        layout_4 = QtWidgets.QHBoxLayout()
-        layout_4.addWidget(self._argument_label, 0)
-        layout_4.addWidget(self._argument_line, 1)
-        layout_4.addWidget(self._btn_toggle, 0)
-        layout_4.addWidget(self._impl_name, 1)
 
         # Layout 5: Hidden help layout
         self._description_widget = QtWidgets.QWidget(self)
         self._description_widget.setVisible(False)
 
         layout_5 = QtWidgets.QVBoxLayout()
-        # layout_5.addStretch(1)
         layout_5.setSpacing(0)
         layout_5.setContentsMargins(0, 0, 0, 0)
 
@@ -279,14 +269,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         layout_6.addWidget(self._match, 0)
         layout_6.addWidget(self._search, 0)
         layout_6.addWidget(self._clear, 0)
-        layout_6.addWidget(self._font_options, 0)
 
         # Layout 7: Help description layout
         layout_7 = QtWidgets.QVBoxLayout()
         layout_7.addWidget(self._description, 0)
         layout_5.addLayout(layout_7, 0)
         layout_5.addLayout(layout_6, 0)
-        # layout_7.addStretch(1)
         layout_7.setSpacing(0)
         layout_7.setContentsMargins(0, 0, 0, 0)
 
@@ -298,137 +286,61 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # add hidden widget
         mainLayout.addWidget(self._description_widget)
         self._description_widget.setLayout(layout_5)
-        # add arguments layout
-        mainLayout.addLayout(layout_4, 0)
-        # mainLayout.setSpacing(2)
-        # mainLayout.setContentsMargins(6, 6, 6, 6)
+
+        # set margins
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         # ------ Bind events
         self._home.pressed.connect(self.onHomePress)
         self._refresh.pressed.connect(self.onRefreshPress)
-        self._up.pressed.connect(self._tree._proxy.goUp)  # Go back
-        self._up.pressed.connect(self.onClearPress)
-        self._enumerate.pressed.connect(self.onEnumeratePress)
-        self._insert_code.pressed.connect(self.onInsertCodeInEditor)
+        self.back.pressed.connect(self.onBackPress)
         #
-        self._all.toggled.connect(lambda: self.onRadioChangeState(self._all))
-        self._only_p.toggled.connect(
-            lambda: self.onRadioChangeState(self._only_p)
-        )
-        self._only_m.toggled.connect(
-            lambda: self.onRadioChangeState(self._only_m)
-        )
-        self._only_star.toggled.connect(
-            lambda: self.onRadioChangeState(self._only_star)
-        )
+        self._selection.pressed.connect(self.onCurrentSelectionPress)
+        self._insert_code.pressed.connect(self.onInsertCodeInEditorPress)
         #
         self._element_names.activated[str].connect(self.onElementNamesPress)
         self._element_index.activated[str].connect(self.onElementIndexPress)
-        self._history.activated[str].connect(self.onBackToHistory)
-        self._options.pressed.connect(self.onOptionsPress)
-        self._options._menu.triggered.connect(self.onOptionMenuTiggered)
+        self._enumerate_index.activated[str].connect(self.onEnumerateIndexPress)
+        self._history.activated[str].connect(self.onHistoryPress)
         #
-        # self._option_save.pressed.connect(self.onSaveOptionsInConf)
+        self._options.pressed.connect(self.onOptionsPress)
+        self.show_hide_menu.triggered.connect(self.onShowHideMenuTiggered)
+        self.font_size_help_menu.triggered.connect(
+            self.onFontHelpOptionMenuTiggered
+        )
+        self.font_size_tree_menu.triggered.connect(
+            self.onFontTreeOptionMenuTiggered
+        )
+        self.history_menu.triggered.connect(self.onHistoryOptionMenuTiggered)
+        #
+        self._btn_toggle.toggled.connect(self.onHelpTogglePress)
         #
         self._search.pressed.connect(self.onSearchPress)
-        self._clear.pressed.connect(self.onClearPress)
+        self._clear.pressed.connect(self.onClearHelpPress)
 
-        self._font_options.pressed.connect(self.onFontOptionsPress)
-        self._font_options._menu.triggered.connect(
-            self.onFontOptionMenuTiggered
-        )
+        # Create json result file
+        createResultFile(),
 
-        self._btn_toggle.toggled.connect(self.onHelpToggle)
+        # Load History
+        if self._config.historyClearOnStartup:
+            self._config.historyFreeze = 0
+            createHistoryFile()
+        self.loadHistory()
 
     # ----------------------------
     #           EVENTS
     # ----------------------------
 
-    def onHelpToggle(self):
-        """ Open or close new project widget. """
-
-        if self._btn_toggle.isChecked():
-            self._description_widget.setVisible(True)
-            self._btn_toggle.setText("Close Help")
-        else:
-            self._description_widget.setVisible(False)
-            self._btn_toggle.setText("Show Help")
-            if self._description.toPlainText() == "":
-                self._description.setText(self.initText)
-
-    def onClearPress(self):
-        """ Remove results """
-        # self._description.clear()
-        self._description.setText(self.initText)
-        self._search_line.setText("")
-        self._desc_counter.setText("0")
-        self._desc_all_items.setText("0")
-
-    def onSearchPress(self):
-        """ Search UNO API """
-        from .tree import conn, formatReference
-
-        self._description.clear()
-        self._desc_counter.setText("0")
-        self._desc_all_items.setText("0")
-
-        search = self._search_line.text()
-        if search:
-            cur = conn.cursor()
-
-            if self._match.isChecked() == True:
-                cur.execute(
-                    "SELECT signature, description, reference FROM UNOtable WHERE  name=?",
-                    [search],
-                )
-            else:
-                cur.execute(
-                    "SELECT signature, description, reference FROM UNOtable WHERE  name like ?",
-                    ("%" + search + "%",),
-                )
-            rows = cur.fetchall()
-            res = ""
-            n = 0
-            self._desc_all_items.setText(str(n))
-            for sig, desc, ref in rows:
-                desc = desc + "&newline&Reference &newline&" + ref
-                sig, desc = formatReference(sig, desc, bold=[search])
-                sig = "<p style = 'background-color: lightgray'>{}</p>".format(
-                    sig
-                )
-                res = res + sig + desc
-                n += 1
-
-            self._description.setText(res)
-            self._desc_all_items.setText(str(n))
-
-    def onHomePress(self):
-        """ Back to start """
-        new_line = ""
-        self._line.setText(new_line)
-        self._tree._proxy.setName(new_line)
-        self.onClearPress()
-
-    def onRefreshPress(self):
-        """ Refresh """
-        # item = self._tree.currentItem()
-        line = self._line.text()
-        self._tree._proxy.setName(line)
-        self.onClearPress()
-
-    def getCodeSnippet(self):
-        """
-        """
-        line = str(self._line.text())
-        data = line.split(".")
-        return self.createCodeSnippet(data)
-
     @staticmethod
     def createCodeSnippet(data):
-        """ Create code snippet """
+        """ Create code snippet
+         Split string by '.'
+        """
+        data = data.split(".")
         target = "initial_target"
         code = ""
+
         for index in range(0, len(data)):
             try:
                 if index == 0:
@@ -468,117 +380,277 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         new_code = code
         return new_code
 
-    def onInsertCodeInEditor(self):
-        """ Insert code snippet in the editor. """
+    # Layout 1
+    def onHomePress(self):
+        """ Back to start """
 
-        code = self.getCodeSnippet()
+        self.onClearHelpPress()
+        self._tree._proxy.setName("")
+
+    def onRefreshPress(self):
+        """ Refresh """
+        self.onClearHelpPress()
+        line = self._line.text()
+        self._tree._proxy.setName(line)
+
+    def onBackPress(self):
+        """ Go back """
+        self.onClearHelpPress()
+        line = self._line.text()
+        if line:
+            self._tree._proxy.goUp()
+        else:
+            self._tree._proxy.setName("")
+
+    def onCurrentSelectionPress(self):
+        """ Get selected object """
+        line = self._line.text()
+        new_line = line + ".getCurrentSelection()"
+        self._tree._proxy.setName(new_line)
+
+    def onInsertCodeInEditorPress(self):
+        """ Insert code snippet in the editor. """
+        line = str(self._line.text())
+        # data = line.split(".")
+        code = self.createCodeSnippet(line)
+        # code = self.getCodeSnippet()
         editor = pyzo.editors.getCurrentEditor()
         editor.insertPlainText(code)
 
-    #
-    def onRadioChangeState(self, radiobox):
-        """ Filter tree
-        Show All, Uppercase or Lowercase elements
-        """
-
-        root = self._tree.invisibleRootItem()
-        child_count = root.childCount()
-        for i in range(child_count):
-            item = root.child(i)
-            name = item.text(0)
-            # All
-            if radiobox.text() == "Aa" and radiobox.isChecked() is True:
-                if name[0].isupper() or name[0].islower():
-                    self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
-            # Uppercase
-            if radiobox.text() == "A" and radiobox.isChecked() is True:
-                if name[0].islower():
-                    self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
-                else:
-                    self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
-            # Lowercase
-            if radiobox.text() == "a" and radiobox.isChecked() is True:
-                if name[0].isupper():
-                    self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
-                else:
-                    self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
-            # Checked
-            if radiobox.text() == "Checked" and radiobox.isChecked() is True:
-                if self._line.text() in self._tree.checked_dict:
-                    if name in self._tree.checked_dict[self._line.text()]:
-                        self._tree.setRowHidden(i, QtCore.QModelIndex(), False)
-                    else:
-                        self._tree.setRowHidden(i, QtCore.QModelIndex(), True)
-                else:
-                    pass
-
-    def onEnumeratePress(self):
-        """ Create enumeration """
-        line = self._line.text()
-        new_line = "list(" + line + ")"
-        self._tree._proxy.setName(new_line)
-
-    def onElementNamesPress(self):
-        """ Fill element names in combo box """
-        element = self._element_names.currentText()
-        if element == "--Name--":
-            pass
-        else:
-            old_line = self._line.text()
-            new_line = str(old_line + '.getByName("' + element + '")')
-            self._line.setText(new_line)
-            self._tree._proxy.setName(new_line)
-
+    # Layout 2
     def onElementIndexPress(self):
         """ Fill element index in combo box """
         element = self._element_index.currentText()
-        if element == "--Index--":
-            pass
-        else:
+        if not element == "--Index--":
             old_line = self._line.text()
             new_line = str(old_line + ".getByIndex(" + element + ")")
             self._line.setText(new_line)
             self._tree._proxy.setName(new_line)
 
-    def onBackToHistory(self):
+    def onElementNamesPress(self):
+        """ Fill element names in combo box """
+        element = self._element_names.currentText()
+        if not element == "--Name--":
+            old_line = self._line.text()
+            new_line = str(old_line + '.getByName("' + element + '")')
+            self._line.setText(new_line)
+            self._tree._proxy.setName(new_line)
+
+    def onEnumerateIndexPress(self):
+        """ Create enumeration """
+        element = self._enumerate_index.currentText()
+        line = self._line.text()
+        if element == "All":
+            new_line = "list(" + line + ")"
+            self._tree._proxy.setName(new_line)
+        else:
+            new_line = "list(" + str(line + ")[" + element + "]")
+            self._line.setText(new_line)
+            self._tree._proxy.setName(new_line)
+
+    def onHistoryPress(self):
         """ Back to history """
         new_line = self._history.currentText()
         self._line.setText(new_line)
         self._tree._proxy.setName(new_line)
 
+    def onHelpTogglePress(self):
+        """ Open or close new project widget. """
+
+        if self._btn_toggle.isChecked():
+            self._description_widget.setVisible(True)
+        else:
+            self._description_widget.setVisible(False)
+            if self._description.toPlainText() == "":
+                self._description.setText(self.initText)
+
+    # Layout 5
+
+    def onSearchPress(self):
+        """ Search UNO API """
+        from .tree import conn, formatReference
+
+        self._description.clear()
+        self._desc_counter.setText("0")
+        self._desc_all_items.setText("0")
+
+        search = self._search_line.text()
+        if search:
+            cur = conn.cursor()
+
+            if self._match.isChecked():
+                cur.execute(
+                    "SELECT signature, description, reference FROM UNOtable WHERE  name=?",
+                    [search],
+                )
+            else:
+                cur.execute(
+                    "SELECT signature, description, reference FROM UNOtable WHERE  name like ?",
+                    ("%" + search + "%",),
+                )
+            rows = cur.fetchall()
+            res = ""
+            n = 0
+            self._desc_all_items.setText(str(n))
+            for sig, desc, ref in rows:
+                desc = desc + "&newline&Reference &newline&" + ref
+                sig, desc = formatReference(sig, desc, bold=[search])
+                sig = "<p style = 'background-color: lightgray'>{}</p>".format(
+                    sig
+                )
+                res = res + sig + desc
+                n += 1
+
+            self._description.setText(res)
+            self._desc_all_items.setText(str(n))
+
+    def onClearHelpPress(self):
+        """ Remove results """
+        self._description.setText(self.initText)
+        self._search_line.setText("")
+        self._desc_counter.setText("0")
+        self._desc_all_items.setText("0")
+
     def onAddToHistory(self, data):
         """ Record history """
-        old_list = [
-            self._history.itemText(i) for i in range(self._history.count())
-        ]
-        # add new to list
-        if data not in old_list:
-            old_list.append(data)
-        # sort
-        new_list = sorted(old_list)
-        self._history.clear()
-        # show
-        self._history.addItems(new_list)
+
+        if data:
+            if not self._config.historyFreeze:
+                # add new to list
+                hist_list = readHistory()
+                if data not in hist_list:
+                    if len(hist_list) > self._config.historyMaximum:
+                        hist_list.pop(1)
+
+                    hist_list.append(data)
+                    writeHistory(hist_list)
+                # sort
+                new_list = sorted(hist_list)
+                self._history.clear()
+                # show
+                self._history.addItems(new_list)
+
+    def displayEmptyWorkspace(self, empty):
+        self._tree.setVisible(not empty)
+        self._initText.setVisible(empty)
 
     def onOptionsPress(self):
         """ Create the menu for the button, Do each time to make sure
         the checks are right. """
 
+        # Clear submenus
+        self.show_hide_menu.clear()
+        self.font_size_menu.clear()
+        self.font_size_tree_menu.clear()
+        self.font_size_help_menu.clear()
+        self.history_menu.clear()
+
         # Get menu
         menu = self._options._menu
         menu.clear()
 
-        for typ in ["type", "function", "module", "private"]:
-            checked = typ in self._config.hideTypes
-            action = menu.addAction("Hide %s" % typ)
+        # Font size menu
+        # tree menu
+        currentSize = self._config.fontSizeTree
+        for i in range(8, 15):
+            action = self.font_size_tree_menu.addAction("font-size: %ipx" % i)
+            action.setCheckable(True)
+            action.setChecked(i == currentSize)
+
+        self.font_size_menu.addMenu(self.font_size_tree_menu)
+
+        # help menu
+        currentSize = self._config.fontSizeHelp
+        for i in range(8, 15):
+            action = self.font_size_help_menu.addAction("font-size: %ipx" % i)
+            action.setCheckable(True)
+            action.setChecked(i == currentSize)
+
+        self.font_size_menu.addMenu(self.font_size_help_menu)
+
+        menu.addMenu(self.font_size_menu)
+
+        # History menu
+        history_option = [
+            (
+                "clear",
+                pyzo.translate("pyzoWorkspace", "Clear ::: Clear history."),
+            ),
+            (
+                "edit",
+                pyzo.translate(
+                    "pyzoWorkspace", "Edit ::: First line must be empty!"
+                ),
+            ),
+            (
+                "reload",
+                pyzo.translate("pyzoWorkspace", "Reload ::: Reload history."),
+            ),
+        ]
+
+        for type, display in history_option:
+            self.history_menu.addItem(
+                display,
+                icon=None,
+                callback=self.onHistoryOptionMenuTiggered,
+                value=type,
+            )
+
+        self.history_menu.addSeparator()
+
+        self.history_menu.addCheckItem(
+            pyzo.translate(
+                "pyzoWorkspace", "Freeze ::: Turn history in favorites."
+            ),
+            icon=None,
+            callback=self._setHistoryFreeze,
+            value=None,
+            selected=self._config.historyFreeze,
+        )
+        self.history_menu.addCheckItem(
+            pyzo.translate(
+                "pyzoWorkspace",
+                "Clear on startup ::: Clear history on startup.",
+            ),
+            icon=None,
+            callback=self._setClearHistoryOnStartup,
+            value=None,
+            selected=self._config.historyClearOnStartup,
+        )
+
+        menu.addMenu(self.history_menu)
+
+        # Show/Hide menu
+        hideables = [
+            ("type", pyzo.translate("pyzoWorkspace", "Hide types")),
+            ("function", pyzo.translate("pyzoWorkspace", "Hide functions")),
+            ("module", pyzo.translate("pyzoWorkspace", "Hide modules")),
+            (
+                "private",
+                pyzo.translate("pyzoWorkspace", "Hide private identifiers"),
+            ),
+            (
+                "startup",
+                pyzo.translate(
+                    "pyzoWorkspace", "Hide the shell's startup variables"
+                ),
+            ),
+        ]
+
+        for type, display in hideables:
+            checked = type in self._config.hideTypes
+            action = self.show_hide_menu.addAction(display)
+            action._what = type
             action.setCheckable(True)
             action.setChecked(checked)
 
-    def onOptionMenuTiggered(self, action):
+        menu.addMenu(self.show_hide_menu)
+
+    def onShowHideMenuTiggered(self, action):
         """  The user decides what to hide in the workspace. """
 
         # What to show
-        type = action.text().split(" ", 1)[1]
+        type = action._what.lower()
 
         # Swap
         if type in self._config.hideTypes:
@@ -590,23 +662,8 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         # Update
         self._tree.fillWorkspace()
 
-    def onFontOptionsPress(self):
-        """ Create the menu for the button, Do each time to make sure
-        the checks are right. """
-
-        # Get menu
-        menu = self._font_options._menu
-        menu.clear()
-
-        # Add font size options
-        currentSize = self._config.fontSize
-        for i in range(8, 15):
-            action = menu.addAction("font-size: %ipx" % i)
-            action.setCheckable(True)
-            action.setChecked(i == currentSize)
-
-    def onFontOptionMenuTiggered(self, action):
-        """  The user decides what to show in the structure. """
+    def onFontHelpOptionMenuTiggered(self, action):
+        """  The user decides about font size in the Help. """
         # Get text
         text = action.text().lower()
 
@@ -614,10 +671,64 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             # Get font size
             size = int(text.split(":", 1)[1][:-2])
             # Update
-            self._config.fontSize = size
+            self._config.fontSizeHelp = size
             # Set font size
             font = self._description.font()
-            font.setPointSize(self._config.fontSize)
+            font.setPointSize(self._config.fontSizeHelp)
             self._description.setFont(QtGui.QFont(font))
 
-        self._description.updateGeometries()
+    def onFontTreeOptionMenuTiggered(self, action):
+        """  The user decides about font size in the Tree. """
+        # Get text
+        text = action.text().lower()
+
+        if "size" in text:
+            # Get font size
+            size = int(text.split(":", 1)[1][:-2])
+            # Update
+            self._config.fontSizeTree = size
+            # Set font size
+            font = self._tree.font()
+            font.setPointSize(self._config.fontSizeTree)
+            self._tree.setFont(QtGui.QFont(font))
+
+        self._tree.updateGeometries()
+
+    def onHistoryOptionMenuTiggered(self, action):
+        """  The user decides about history content. """
+
+        # clear
+        if action == "clear":
+            createHistoryFile()
+            self.loadHistory()
+        # edit
+        elif action == "edit":
+            fpath = getHistoryFilePath()
+            pyzo.editors.loadFile(fpath)
+        # reload
+        elif action == "reload":
+            self.loadHistory()
+
+    def loadHistory(self):
+        """  Load history. """
+        self._history.clear()
+        hl = readHistory()
+        self._history.addItems(sorted(hl))
+
+    def _setHistoryFillOption(self, value):
+
+        if value == "freeze":
+            self._config.historyFreeze = value
+        elif value == "clearonstartup":
+            self._config.historyFreeze = not value
+
+    def _setHistoryFreeze(self, value):
+        """  Turn history in the favorites. """
+
+        self._config.historyFreeze = value
+        self._config.historyClearOnStartup = not value
+
+    def _setClearHistoryOnStartup(self, value):
+        """  Create history file on startup. """
+        self._config.historyClearOnStartup = value
+        self._config.historyFreeze = not value

@@ -7,6 +7,7 @@ import sqlite3
 import webbrowser
 
 import pyzo
+from pyzo import translate
 from pyzo.util.qt import QtCore, QtGui, QtWidgets
 from .utils import splitName, splitNameCleaner, joinName
 
@@ -43,6 +44,54 @@ conn = sqlite3.connect(UNODOC_DB)
 # JSON serialization paths
 RESULTFILE = "result.txt"
 RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
+# History file
+HISTORYFILE = "ws_history.txt"
+HISTORY = os.path.join(WORKSPACE_DIR, HISTORYFILE)
+DIALOG_INPUT = []
+
+
+# Result file
+def createResultFile():
+
+    if os.path.exists(RESULT):
+        os.remove(RESULT)
+
+    with open(RESULT, "w") as f:
+        f.write("{}")
+
+
+def getResultFilePath():
+    return RESULT
+
+
+# History file
+def createHistoryFile():
+
+    if os.path.exists(HISTORY):
+        os.remove(HISTORY)
+
+    with open(HISTORY, "w") as f:
+        f.write("\n")
+
+
+def getHistoryFilePath():
+    return HISTORY
+
+
+def writeHistory(itemlist):
+    """ Write history in the file"""
+    with open(HISTORY, "w") as hist:
+        for item in itemlist:
+            hist.write("{}\n".format(item))
+
+
+def readHistory():
+    """Read history from file"""
+    with open(HISTORY, "r") as f:
+        lines = f.readlines()
+
+    l = [line.rstrip("\n") for line in lines]
+    return l
 
 
 def formatReference(signature, description, bold=[]):
@@ -154,8 +203,8 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         shell = pyzo.shells.getCurrentShell()
         if shell:
             # via unoinspect
-            if not self._name:  # tr(self._name) == "":
-                pass
+            if not self._name or self._name.endswith(".value"):
+                createResultFile()
             else:
                 shell.executeCommand(
                     "Inspector().inspect(" + str(self._name) + ")\n"
@@ -241,17 +290,19 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
     def __init__(self, parent):
         QtWidgets.QTreeWidget.__init__(self, parent)
 
-        # # JSON serialization file
+        # create JSON serialization file
         if not os.path.isfile(RESULT):
             with open(RESULT, "w") as fl:
                 fl.write("{}")
 
+        # create history file
+        if not os.path.isfile(HISTORY):
+            with open(HISTORY, "w") as hfl:
+                hfl.write("\n")
+
         self._config = parent._config
         self.old_item = ""
         self._name_item = ""
-
-        # Checked items
-        self.checked_dict = {}
 
         # tree selected item
         self._tree_name = ""
@@ -306,9 +357,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             "sep",
             "Open Office Forum Search",
             "Open Office Snippets Search",
-            "sep",
-            "Check",
-            "Unmark",
         ]
 
         for a in workspace_menu:
@@ -338,16 +386,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         ob = ".".join(search[:-1])
         search = search[-1]
 
-        # if "Show namespace" in req:
-        #     # Go deeper
-        #     self.onItemExpand(action._item)
-
-        # if "Show help" in req:
-        #     # Show help in help tool (if loaded)
-        #     hw = pyzo.toolManager.getTool("pyzointeractivehelp")
-        #     if hw:
-        #         hw.setObjectName(action._objectName)
-
         if "Copy" in req:
             sys_clip = QtWidgets.QApplication.clipboard()
             sys_clip.setText(search)
@@ -364,25 +402,6 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             url = SNIPPET_PATH + search + SNIPPET_SUFIX
             webbrowser.open(url)
 
-        elif "Check" in req:
-            # Check item
-            if ob in self.checked_dict:
-                if search not in self.checked_dict[ob]:
-                    self.checked_dict[ob].append(search)
-                    self.parent().onRefreshPress()
-            else:
-                self.checked_dict[ob] = []
-                self.checked_dict[ob].append(search)
-                self.parent().onRefreshPress()
-
-        elif "Unmark" in req:
-            # Uncheck item
-            if ob in self.checked_dict:
-                if search in self.checked_dict[ob]:
-                    self.checked_dict[ob].remove(search)
-
-            self.parent().onRefreshPress()
-
         # ------- End PyUNO ----------------
 
         elif "Delete" in req:
@@ -392,32 +411,45 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
     def onItemExpand(self, item):
         """ onItemExpand(item)
-        Inspect the attributes of that item.
+        Inspect the attributes of that item
+        Add arguments to item if needed and then inspect the attributes of that item.
         """
-
-        # argument line
-        argument = self.parent()._argument_line.text()
         inspect_item = item.text(0)
 
-        if argument:
-            inspect_item = inspect_item + "(" + argument + ")"
-        else:
-            if inspect_item.startswith("get"):
+        # if item is UNO method
+        if item.text(0)[0].islower():
+            # get item name and arguments
+            name = item.text(0)
+            typ = item.text(1)
+            rep = item.text(2)
+
+            if name == "value" and typ == "pyuno.struct":
+                pass
+            elif rep == "( )":
                 inspect_item = inspect_item + "()"
+            elif rep.startswith("(") and len(rep) > 3:
+                # show dialog to add arguments
+                dialog = InputDialog(self)
+                dialog.setWindowTitle(
+                    translate("menu dialog", "Add arguments to: ") + name
+                )
+                rep = rep.replace(",", ",\n ")
+                dialog._argument_info.setText(rep)
 
-            elif inspect_item in [
-                "hasElements",
-                "isModified",
-                "createEnumeration",
-                "nextElement",
-            ]:
-                inspect_item = inspect_item + "()"
+                dialog_result = dialog.exec_()
+                if dialog_result == QtWidgets.QDialog.Accepted:
+                    if dialog._argument.text() == "":
+                        inspect_item = ""
+                    else:
+                        inspect_item = (
+                            inspect_item + "(" + dialog._argument.text() + ")"
+                        )
+                else:
+                    inspect_item = ""
 
-        # set item for inspection
-        self._proxy.addNamePart(inspect_item)
-
-        # clear argument line
-        self.parent()._argument_line.clear()
+        if inspect_item:
+            # set item for inspection
+            self._proxy.addNamePart(inspect_item)
 
     def resetWidget(self):
         """ resetWidget
@@ -425,10 +457,13 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """
         self.parent()._element_names.clear()
         self.parent()._element_index.clear()
-        self.parent()._enumerate.setEnabled(False)
+        self.parent()._enumerate_index.clear()
+        self.parent()._description.setText(self.parent().initText)
+
+        self.parent()._selection.setEnabled(False)
         self.parent()._element_names.setEnabled(False)
         self.parent()._element_index.setEnabled(False)
-        self.parent()._impl_name.setText("")
+        self.parent()._enumerate_index.setEnabled(False)
 
     def fillWidget(self):
         """ fillWidget
@@ -457,7 +492,18 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
         try:
             if self._proxy._uno_dict["createEnumeration"]["items"]:
-                self.parent()._enumerate.setEnabled(True)
+                self.parent()._enumerate_index.addItem("--Enumeration--")
+                self.parent()._enumerate_index.addItem("All")
+                self.parent()._enumerate_index.addItems(
+                    self._proxy._uno_dict["createEnumeration"]["items"]
+                )
+                self.parent()._enumerate_index.setEnabled(True)
+        except:
+            pass
+
+        try:
+            if self._proxy._uno_dict["getCurrentSelection"]:
+                self.parent()._selection.setEnabled(True)
         except:
             pass
 
@@ -467,7 +513,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """
         bChecked = False
 
-        # Clear first
+        # Clear tree and widget first
         self.clear()
         self.resetWidget()
 
@@ -475,11 +521,9 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         line = self.parent()._line
         line.setText(self._proxy._name)
 
-        if self._proxy._name in self.checked_dict:
-            bChecked = True
-
-        # Fill widgets
-        self.parent().onAddToHistory(line.text())
+        # Fill history and widgets
+        if line.text():
+            self.parent().onAddToHistory(line.text().strip())
         self.fillWidget()
 
         # Add elements
@@ -510,7 +554,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             if name.startswith("_") and "private" in self._config.hideTypes:
                 continue
             if name == "ImplementationName":
-                self.parent()._impl_name.setText(rep)
+                pyzo.main.statusBar().showMessage(rep, 5000)
             if rep.startswith("pyuno object ("):
                 rep = "pyuno object"
 
@@ -536,10 +580,12 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             item.setToolTip(1, tt)
             item.setToolTip(2, tt)
 
-        self.parent()._all.setChecked(True)
+        # scroll on the start
+        self.scrollToItem(self.topLevelItem(0))
 
-        # Clear UNO dict
-        # self._proxy._uno_dic = {}
+        self.parent().displayEmptyWorkspace(
+            self.topLevelItemCount() == 0 and self._proxy._name == ""
+        )
 
     def onItemClicked(self):
         """ onItemClicked()
@@ -573,10 +619,11 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                 find = self.parent()._line.text() + "." + find
                 self.queryDoc(find)
         except:
-            pass
+            t = "No information is available for: {}".format(find)
+            self.parent()._description.setText(t)
 
     def queryDoc(self, name):
-        """ Query the python documentation for the text in the line edit. """
+        """ Query the Python documentation for the text in the line edit. """
         # Get shell and ask for the documentation
         self._name_item = ""
         shell = pyzo.shells.getCurrentShell()
@@ -598,48 +645,51 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         else:
             response = future.result()
             if not response:
+                t = "No information is available for: {}".format(find)
+                self.parent()._description.setText(t)
                 return
-        response_txt = str(response).split("\n")
-        name = self._name_item.split(".")
-
-        n = 0
-        txt = ""
-        start = (
-            self._name_item + "(",
-            name[-1],
-            "bool(",
-            "bytes(",
-            "dict(",
-            "int(",
-            "list(",
-            "str(",
-            "tuple(",
-        )
-        for i, des in enumerate(response_txt):
-            if i == 0:
-                if name[-1] in des:
-                    des = des.replace(
-                        name[-1],
-                        '<span style="font-weight:bold;">{}</span>'.format(
-                            name[-1]
-                        ),
-                    )
-
-                res = "<p style = 'background-color: palegreen'>{}</p>".format(
-                    des
-                )
-            elif des.startswith(start):
-                res = "<strong>{}</strong>".format(des)
             else:
-                res = des + "\n"
+                response_txt = str(response).split("\n")
+                name = self._name_item.split(".")
 
-            res = "<p>{}</p>".format(res)
+                n = 0
+                txt = ""
+                start = (
+                    self._name_item + "(",
+                    name[-1],
+                    "bool(",
+                    "bytes(",
+                    "dict(",
+                    "int(",
+                    "list(",
+                    "str(",
+                    "tuple(",
+                )
+                for i, des in enumerate(response_txt):
+                    if i == 0:
+                        if name[-1] in des:
+                            des = des.replace(
+                                name[-1],
+                                '<span style="font-weight:bold;">{}</span>'.format(
+                                    name[-1]
+                                ),
+                            )
 
-            txt = txt + res
+                        res = "<p style = 'background-color: palegreen'>{}</p>".format(
+                            des
+                        )
+                    elif des.startswith(start):
+                        res = "<strong>{}</strong>".format(des)
+                    else:
+                        res = des + "\n"
 
-            n += 1
+                    res = "<p>{}</p>".format(res)
 
-        self.parent()._description.setText(txt)
+                    txt = txt + res
+
+                    n += 1
+
+                self.parent()._description.setText(txt)
 
     def unoDescriptions(self, find):
         """ Process UNO documentation. """
@@ -655,71 +705,125 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             (find, getfind),
         )
         rows = cur.fetchall()
-        self.parent()._desc_all_items.setText(str(len(rows)))
-        self.parent()._desc_counter.setText("0")
+        if rows:
+            self.parent()._desc_all_items.setText(str(len(rows)))
+            self.parent()._desc_counter.setText("0")
 
-        try:
-            n = 0
-            ok_counter = 0
-            good = ""
-            bad = ""
-            for sig, desc, ref in rows:
-                desc = desc + "&newline&Reference &newline&" + ref
-                sig, desc = formatReference(sig, desc, bold=[find, getfind])
+            try:
+                n = 0
+                ok_counter = 0
+                good = ""
+                bad = ""
+                for sig, desc, ref in rows:
+                    desc = desc + "&newline&Reference &newline&" + ref
+                    sig, desc = formatReference(sig, desc, bold=[find, getfind])
 
-                # signature color
-                sig_OK = False
-                if len(rows) == 1:
-                    # if only one result, color green
-                    sig = "<p style = 'background-color: palegreen'>{}</p>".format(
-                        sig
-                    )
-                    ok_counter += 1
-                    sig_OK = True
-
-                elif self._tree_repr in sig:
-                    # if param is OK, color green
-                    sig = "<p style = 'background-color: palegreen'>{}</p>".format(
-                        sig
-                    )
-                    ok_counter += 1
-                    sig_OK = True
-
-                elif self._tree_repr == "pyuno object" and sig.startswith(
-                    "com.sun.star" + self._tree_type
-                ):
-                    # if param is OK, color green
-                    sig = "<p style = 'background-color: palegreen'>{}</p>".format(
-                        sig
-                    )
-                    ok_counter += 1
-                    sig_OK = True
-
-                else:
-                    sig = "<p style = 'background-color: lightgray'>{}</p>".format(
-                        sig
-                    )
+                    # signature color
                     sig_OK = False
+                    if len(rows) == 1:
+                        # if only one result, color green
+                        sig = "<p style = 'background-color: palegreen'>{}</p>".format(
+                            sig
+                        )
+                        ok_counter += 1
+                        sig_OK = True
 
-                desc = "<p>{}</p>".format(desc)
+                    elif self._tree_repr in sig:
+                        # if param is OK, color green
+                        sig = "<p style = 'background-color: palegreen'>{}</p>".format(
+                            sig
+                        )
+                        ok_counter += 1
+                        sig_OK = True
 
-                if sig_OK:
-                    good = good + sig + desc
-                else:
-                    bad = bad + sig + desc
+                    elif self._tree_repr == "pyuno object" and sig.startswith(
+                        "com.sun.star" + self._tree_type
+                    ):
+                        # if param is OK, color green
+                        sig = "<p style = 'background-color: palegreen'>{}</p>".format(
+                            sig
+                        )
+                        ok_counter += 1
+                        sig_OK = True
 
-                sig = ""
-                desc = ""
-                # set font size
-                font = self.parent()._description.font()
-                font.setPointSize(self._config.fontSize)
-                self.parent()._description.setFont(QtGui.QFont(font))
+                    else:
+                        sig = "<p style = 'background-color: lightgray'>{}</p>".format(
+                            sig
+                        )
+                        sig_OK = False
 
-                n += 1
+                    desc = "<p>{}</p>".format(desc)
 
-            txt = good + bad
+                    if sig_OK:
+                        good = good + sig + desc
+                    else:
+                        bad = bad + sig + desc
 
-            self.parent()._description.setText(txt)
-            self.parent()._desc_counter.setText(str(ok_counter))
-        except:
-            pass
+                    sig = ""
+                    desc = ""
+                    # set font size
+                    font = self.parent()._description.font()
+                    font.setPointSize(self._config.fontSize)
+                    self.parent()._description.setFont(QtGui.QFont(font))
+
+                    n += 1
+
+                txt = good + bad
+
+                self.parent()._description.setText(txt)
+                self.parent()._desc_counter.setText(str(ok_counter))
+            except:
+                pass
+        else:
+            t = "No information is available for: {}".format(find)
+            self.parent()._description.setText(t)
+
+
+class InputDialog(QtWidgets.QDialog):
+    """Input Dialog
+    """
+
+    def __init__(self, *args):
+
+        QtWidgets.QDialog.__init__(self, *args)
+
+        # Set size
+        size = 650, 190
+        offset = 0
+        size2 = size[0], size[1] + offset
+        self.resize(*size2)
+        self.setMaximumSize(*size2)
+        self.setMinimumSize(*size2)
+        # self.item = ""
+
+        # Arguments
+        self._argument_info = QtWidgets.QTextEdit(self)
+        self._argument_info.setStyleSheet("QTextEdit { background:#ddd; }")
+        self._argument_info.setToolTip("Arguments")
+        self._argument_info.setReadOnly(True)
+        #
+        self._argument = QtWidgets.QLineEdit(self)
+        self._argument.setReadOnly(False)
+        self._argument.setPlaceholderText('"string", 1, variable')
+        tip = 'Add argument:\n"NAME" = object.getByName("NAME"),\n 0 = object.getByIndex(0),\n variable = object.createMethod(variable)'
+        self._argument.setToolTip(tip)
+        #
+        layout_1 = QtWidgets.QVBoxLayout()
+        layout_1.addWidget(self._argument_info, 0)
+        layout_1.addWidget(self._argument, 0)
+
+        # Buttons
+        self.button_box = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
+        )
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+        layout_2 = QtWidgets.QHBoxLayout()
+        layout_2.addWidget(self.button_box, 0)
+
+        # Layouts
+        mainLayout = QtWidgets.QVBoxLayout(self)
+        mainLayout.addLayout(layout_1, 0)
+        mainLayout.addLayout(layout_2, 0)
+        self.setLayout(mainLayout)
