@@ -16,8 +16,8 @@ PyUNO Workspace is a modified version of Pyzo IDE Workspace plugin, designed for
 * for examined objects:
   * display UNO API documentation or
   * display Python documentation
-  * find code examples
-  * find code snippets
+  * find PyUNO code examples
+  * find PyUNO code snippets
 * generate code snippet
 * and more:
   * template for macros or custom scripts
@@ -43,5 +43,5 @@ For more information see [documenation](https://github.com/kelsa-pi/PyUNO_Worksp
 BSD
 
 ## Status
-Release Candidate 3 - Feature complete and stable enough to be usable for day-to-day work.
+Feature complete and stable enough to be usable for day-to-day work.
 
