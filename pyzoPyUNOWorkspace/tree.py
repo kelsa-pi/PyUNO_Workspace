@@ -763,7 +763,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                     desc = ""
                     # set font size
                     font = self.parent()._description.font()
-                    font.setPointSize(self._config.fontSize)
+                    font.setPointSize(self._config.fontSizeHelp)
                     self.parent()._description.setFont(QtGui.QFont(font))
 
                     n += 1
@@ -772,8 +772,9 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
                 self.parent()._description.setText(txt)
                 self.parent()._desc_counter.setText(str(ok_counter))
-            except:
-                pass
+            except Exception as err:
+                print(err)
+
         else:
             t = "No information is available for: {}".format(find)
             self.parent()._description.setText(t)
