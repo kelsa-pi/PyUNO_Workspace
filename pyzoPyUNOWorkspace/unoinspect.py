@@ -20,8 +20,10 @@
 
 import argparse
 from json import dump
-from inspect import getsourcefile
-from os.path import abspath, dirname, join, realpath
+import pickle
+from inspect import getsourcefile, signature
+import os
+from os.path import abspath, dirname, join, realpath, exists
 
 import uno
 from com.sun.star.beans.MethodConcept import ALL as _METHOD_CONCEPT_ALL
@@ -35,12 +37,14 @@ from com.sun.star.reflection.ParamMode import (
 _PATH = abspath(getsourcefile(lambda: 0))
 # output file path
 _DIR = dirname(_PATH)
-_RESULTFILE = "result.txt"
+_JSON_FILE = "result.txt"
+_PICKLE_FILE = "result.pkl"
 
 # print('**********************')
 # print('_PATH = ' + _PATH)
 # print('_DIR = ' + _DIR)
-# print('_RESULTFILE = ' + _RESULTFILE)
+# print('_JSON_FILE = ' + _JSON_FILE)
+# print('_PICKLE_FILE = ' + _PICKLE_FILE)
 
 
 def _mode_to_str(mode):
@@ -321,7 +325,8 @@ class Inspector:
         :param output:  'console': display result in terminal
                         'dict': return dict
                         'json': store result in json file, default
-        Inspector store result in 'result.txt' file in unoinspect.py directory
+                        'pickle': store result in pickle file
+        Store result files (json, pickle) in unoinspect.py directory
         Return properties and methods
         """
         # store result in dictionary
@@ -363,9 +368,23 @@ class Inspector:
         elif output == "dict":
             return context
 
+        # pickle
+        elif output == "pickle":
+            file_path = join(_DIR, _PICKLE_FILE)
+            # remove old file
+            if exists(file_path):
+                os.remove(file_path)
+
+            with open(file_path, "wb") as outfile:
+                pickle.dump(context, outfile)
+
         # store result in json file
         elif output == "json":
-            file_path = join(_DIR, _RESULTFILE)
+            file_path = join(_DIR, _JSON_FILE)
+            # remove old file
+            if exists(file_path):
+                os.remove(file_path)
+
             with open(file_path, "w") as outfile:
                 dump(context, outfile, indent=4)
 
@@ -382,7 +401,10 @@ class Inspector:
         return self.documenter.showInterfaceDoc(object)
 
     def getOutputPath(self):
-        """Show full path for output file
+        """Show full path to output files
         """
-        path = join(_DIR, _RESULTFILE)
-        return path
+        pathJSON = join(_DIR, _JSON_FILE)
+        pathPICKLE = join(_DIR, _PICKLE_FILE)
+
+        return pathJSON, pathPICKLE
+
