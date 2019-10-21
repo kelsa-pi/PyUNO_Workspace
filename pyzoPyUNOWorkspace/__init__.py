@@ -62,8 +62,8 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         #
         if not hasattr(self._config, "historyMaximum"):
             self._config.historyMaximum = 10
-        if not hasattr(self._config, "historyFreeze"):
-            self._config.historyFreeze = 0
+        # if not hasattr(self._config, "historyFreeze"):
+        #     self._config.historyFreeze = 0
         if not hasattr(self._config, "historyClearOnStartup"):
             self._config.historyClearOnStartup = 1
 
@@ -83,19 +83,19 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._home = QtWidgets.QToolButton(self)
         self._home.setIcon(style.standardIcon(style.SP_ArrowUp))
         self._home.setIconSize(QtCore.QSize(16, 16))
-        self._home.setToolTip("Home")
+        self._home.setToolTip("Home - return to the beginninig.")
 
         # Create Refresh tool button
         self._refresh = QtWidgets.QToolButton(self)
         self._refresh.setIcon(style.standardIcon(style.SP_BrowserReload))
         self._refresh.setIconSize(QtCore.QSize(16, 16))
-        self._refresh.setToolTip("Refresh")
+        self._refresh.setToolTip("Reload the current command.")
 
         # Create Go back tool button
         self.back = QtWidgets.QToolButton(self)
         self.back.setIcon(style.standardIcon(style.SP_ArrowLeft))
         self.back.setIconSize(QtCore.QSize(16, 16))
-        self.back.setToolTip("Go back")
+        self.back.setToolTip("Go back to the previous command.")
 
         # Create "path" line edit
         self._line = QtWidgets.QLineEdit(self)
@@ -107,7 +107,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._selection = QtWidgets.QToolButton(self)
         self._selection.setIcon(pyzo.icons.layout)
         self._selection.setIconSize(QtCore.QSize(16, 16))
-        self._selection.setToolTip("Get selection")
+        self._selection.setToolTip("Get selected  objects in the document.")
         self._selection.setEnabled(False)
 
         # Create "insert_code" button
@@ -123,7 +123,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # Create element_index combo box
         self._element_index = QtWidgets.QComboBox(self)
-        self._element_index.setToolTip("Get by index")
+        self._element_index.setToolTip("Set the argument for getByIndex method.")
         self._element_index.setEnabled(False)
 
         # Create element_names combo box
@@ -133,31 +133,31 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # Create enumerate combo box
         self._enumerate_index = QtWidgets.QComboBox(self)
-        self._enumerate_index.setToolTip("Enumerate")
+        self._enumerate_index.setToolTip("Objects enumerated by createEnumeration method")
         self._enumerate_index.setEnabled(False)
 
         # Create history combo box
         self._history = QtWidgets.QComboBox(self)
-        self._history.setToolTip("History")
+        self._history.setToolTip("Show the command history")
         self._history.setEnabled(True)
 
         # Create options menu
         self._options = QtWidgets.QToolButton(self)
-        self._options.setToolTip("Options")
+        self._options.setToolTip("Tool configuration.")
         self._options.setIcon(pyzo.icons.filter)
         self._options.setIconSize(QtCore.QSize(16, 16))
         self._options.setPopupMode(self._options.InstantPopup)
         self._options.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         # main menu
-        self._options._menu = QtWidgets.QMenu()
+        self._options._menu = pyzo.core.menu.Menu(self, "Main menu")  # QtWidgets.QMenu()
         # submenus
-        self.show_hide_menu = pyzo.core.menu.Menu(None, "Show/Hide")
+        self._show_hide_menu = pyzo.core.menu.Menu(None, "Show/Hide")
         #
-        self.font_size_menu = pyzo.core.menu.Menu(None, "Font size")
-        self.font_size_tree_menu = pyzo.core.menu.Menu(None, "Tree")
-        self.font_size_help_menu = pyzo.core.menu.Menu(None, "Help")
+        self._font_size_menu = pyzo.core.menu.Menu(None, "Font size")
+        self._font_size_tree_menu = pyzo.core.menu.Menu(None, "Workspace")
+        self._font_size_help_menu = pyzo.core.menu.Menu(None, "Help")
         #
-        self.history_menu = pyzo.core.menu.Menu(None, "History")
+        self._history_menu = pyzo.core.menu.Menu(None, "History")
 
         # create menu
         self._options.setMenu(self._options._menu)
@@ -185,6 +185,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             ),
             self,
         )
+
         self._initText.setVisible(False)
         self._initText.setWordWrap(True)
 
@@ -305,14 +306,15 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         self._history.activated[str].connect(self.onHistoryPress)
         #
         self._options.pressed.connect(self.onOptionsPress)
-        self.show_hide_menu.triggered.connect(self.onShowHideMenuTiggered)
-        self.font_size_help_menu.triggered.connect(
+        #
+        self._show_hide_menu.triggered.connect(self.onShowHideMenuTiggered)
+        self._font_size_help_menu.triggered.connect(
             self.onFontHelpOptionMenuTiggered
         )
-        self.font_size_tree_menu.triggered.connect(
+        self._font_size_tree_menu.triggered.connect(
             self.onFontTreeOptionMenuTiggered
         )
-        self.history_menu.triggered.connect(self.onHistoryOptionMenuTiggered)
+        self._history_menu.triggered.connect(self.onHistoryOptionMenuTiggered)
         #
         self._btn_toggle.toggled.connect(self.onHelpTogglePress)
         #
@@ -324,7 +326,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # Load History
         if self._config.historyClearOnStartup:
-            self._config.historyFreeze = 0
+            #self._config.historyFreeze = 0
             createHistoryFile()
         self.loadHistory()
 
@@ -515,20 +517,20 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         """ Record history """
 
         if data:
-            if not self._config.historyFreeze:
-                # add new to list
-                hist_list = readHistory()
-                if data not in hist_list:
-                    if len(hist_list) > self._config.historyMaximum:
-                        hist_list.pop(1)
+            #if not self._config.historyFreeze:
+            # add new to list
+            hist_list = readHistory()
+            if data not in hist_list:
+                if len(hist_list) > self._config.historyMaximum:
+                    hist_list.pop(1)
 
-                    hist_list.append(data)
-                    writeHistory(hist_list)
-                # sort
-                new_list = sorted(hist_list)
-                self._history.clear()
-                # show
-                self._history.addItems(new_list)
+                hist_list.append(data)
+                writeHistory(hist_list)
+            # sort
+            new_list = sorted(hist_list)
+            self._history.clear()
+            # show
+            self._history.addItems(new_list)
 
     def displayEmptyWorkspace(self, empty):
         self._tree.setVisible(not empty)
@@ -539,36 +541,50 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         the checks are right. """
 
         # Clear submenus
-        self.show_hide_menu.clear()
-        self.font_size_menu.clear()
-        self.font_size_tree_menu.clear()
-        self.font_size_help_menu.clear()
-        self.history_menu.clear()
+        self._show_hide_menu.clear()
+        self._font_size_menu.clear()
+        self._font_size_tree_menu.clear()
+        self._font_size_help_menu.clear()
+        self._history_menu.clear()
 
         # Get menu
         menu = self._options._menu
         menu.clear()
 
+        # Always clear the shell screen
+        menu.addCheckItem(
+            pyzo.translate(
+                "pyzoWorkspace",
+                "Clear shell ::: Always clear the shell screen after new command.",
+            ),
+            icon=None,
+            callback=self.onClearShell,
+            value=None,
+            selected=self._config.clearScreenAfter,
+        )
+
+        menu.addSeparator()
+
         # Font size menu
         # tree menu
         currentSize = self._config.fontSizeTree
         for i in range(8, 15):
-            action = self.font_size_tree_menu.addAction("font-size: %ipx" % i)
+            action = self._font_size_tree_menu.addAction("font-size: %ipx" % i)
             action.setCheckable(True)
             action.setChecked(i == currentSize)
 
-        self.font_size_menu.addMenu(self.font_size_tree_menu)
+        self._font_size_menu.addMenu(self._font_size_tree_menu)
 
         # help menu
         currentSize = self._config.fontSizeHelp
         for i in range(8, 15):
-            action = self.font_size_help_menu.addAction("font-size: %ipx" % i)
+            action = self._font_size_help_menu.addAction("font-size: %ipx" % i)
             action.setCheckable(True)
             action.setChecked(i == currentSize)
 
-        self.font_size_menu.addMenu(self.font_size_help_menu)
+        self._font_size_menu.addMenu(self._font_size_help_menu)
 
-        menu.addMenu(self.font_size_menu)
+        menu.addMenu(self._font_size_menu)
 
         # History menu
         history_option = [
@@ -576,12 +592,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
                 "clear",
                 pyzo.translate("pyzoWorkspace", "Clear ::: Clear history."),
             ),
-            (
-                "edit",
-                pyzo.translate(
-                    "pyzoWorkspace", "Edit ::: First line must be empty!"
-                ),
-            ),
+            # (
+            #     "edit",
+            #     pyzo.translate(
+            #         "pyzoWorkspace", "Edit ::: First line must be empty!"
+            #     ),
+            # ),
             (
                 "reload",
                 pyzo.translate("pyzoWorkspace", "Reload ::: Reload history."),
@@ -589,25 +605,25 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         ]
 
         for type, display in history_option:
-            self.history_menu.addItem(
+            self._history_menu.addItem(
                 display,
                 icon=None,
                 callback=self.onHistoryOptionMenuTiggered,
                 value=type,
             )
 
-        self.history_menu.addSeparator()
+        self._history_menu.addSeparator()
 
-        self.history_menu.addCheckItem(
-            pyzo.translate(
-                "pyzoWorkspace", "Freeze ::: Turn history in favorites."
-            ),
-            icon=None,
-            callback=self._setHistoryFreeze,
-            value=None,
-            selected=self._config.historyFreeze,
-        )
-        self.history_menu.addCheckItem(
+        # self._history_menu.addCheckItem(
+        #     pyzo.translate(
+        #         "pyzoWorkspace", "Freeze ::: Turn history in favorites."
+        #     ),
+        #     icon=None,
+        #     callback=self._setHistoryFreeze,
+        #     value=None,
+        #     selected=self._config.historyFreeze,
+        # )
+        self._history_menu.addCheckItem(
             pyzo.translate(
                 "pyzoWorkspace",
                 "Clear on startup ::: Clear history on startup.",
@@ -618,7 +634,7 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             selected=self._config.historyClearOnStartup,
         )
 
-        menu.addMenu(self.history_menu)
+        menu.addMenu(self._history_menu)
 
         # Show/Hide menu
         hideables = [
@@ -639,12 +655,12 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         for type, display in hideables:
             checked = type in self._config.hideTypes
-            action = self.show_hide_menu.addAction(display)
+            action = self._show_hide_menu.addAction(display)
             action._what = type
             action.setCheckable(True)
             action.setChecked(checked)
 
-        menu.addMenu(self.show_hide_menu)
+        menu.addMenu(self._show_hide_menu)
 
     def onShowHideMenuTiggered(self, action):
         """  The user decides what to hide in the workspace. """
@@ -661,6 +677,11 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
 
         # Update
         self._tree.fillWorkspace()
+
+    def onClearShell(self, value):
+
+        self._config.clearScreenAfter = value
+
 
     def onFontHelpOptionMenuTiggered(self, action):
         """  The user decides about font size in the Help. """
@@ -702,9 +723,9 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
             createHistoryFile()
             self.loadHistory()
         # edit
-        elif action == "edit":
-            fpath = getHistoryFilePath()
-            pyzo.editors.loadFile(fpath)
+        # elif action == "edit":
+        #     fpath = getHistoryFilePath()
+        #     pyzo.editors.loadFile(fpath)
         # reload
         elif action == "reload":
             self.loadHistory()
@@ -715,20 +736,20 @@ class PyzoPyUNOWorkspace(QtWidgets.QWidget):
         hl = readHistory()
         self._history.addItems(sorted(hl))
 
-    def _setHistoryFillOption(self, value):
+    # def _setHistoryFillOption(self, value):
+    #
+    #     # if value == "freeze":
+    #     #     self._config.historyFreeze = value
+    #     if value == "clearonstartup":
+    #         self._config.historyFreeze = not value
 
-        if value == "freeze":
-            self._config.historyFreeze = value
-        elif value == "clearonstartup":
-            self._config.historyFreeze = not value
-
-    def _setHistoryFreeze(self, value):
-        """  Turn history in the favorites. """
-
-        self._config.historyFreeze = value
-        self._config.historyClearOnStartup = not value
+    # def _setHistoryFreeze(self, value):
+    #     """  Turn history in the favorites. """
+    #
+    #     self._config.historyFreeze = value
+    #     self._config.historyClearOnStartup = not value
 
     def _setClearHistoryOnStartup(self, value):
         """  Create history file on startup. """
         self._config.historyClearOnStartup = value
-        self._config.historyFreeze = not value
+        #self._config.historyFreeze = not value
