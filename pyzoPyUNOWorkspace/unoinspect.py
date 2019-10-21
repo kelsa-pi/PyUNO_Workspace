@@ -40,6 +40,8 @@ _DIR = dirname(_PATH)
 _JSON_FILE = "result.txt"
 _PICKLE_FILE = "result.pkl"
 
+_DEBUG = False
+
 # print('**********************')
 # print('_PATH = ' + _PATH)
 # print('_DIR = ' + _DIR)
@@ -73,7 +75,8 @@ class Inspector:
         try:
             self.ctx = uno.getComponentContext()
         except Exception as err:
-            print(err)
+            if _DEBUG:
+                print(err)
 
         self.smgr = self.ctx.ServiceManager
         self.introspection = self.ctx.getValueByName(
@@ -98,7 +101,9 @@ class Inspector:
         try:
             inspector = self.introspection.inspect(object)
             properties = inspector.getProperties(_PROPERTY_CONCEPT_ALL)
-        except:
+        except Exception as err:
+            if _DEBUG:
+                print(err)
             return P
 
         for property in properties:
@@ -111,43 +116,43 @@ class Inspector:
                 P[p_name]["desc"] = "uno_property"
 
                 # type
-                typ = str(property.Type.typeName)
+                p_typ = str(property.Type.typeName)
 
                 # repr
                 if hasattr(object, p_name):
                     prop_value = getattr(object, p_name, None)
 
                     # tuple
-                    if typ.startswith(
+                    if p_typ.startswith(
                         ("[]string", "[]type", "[]com", "[][]double")
                     ):
-                        t = "<tuple with {} elements>".format(
+                        p_rep = "< tuple with {} elements >".format(
                             str(len(prop_value))
                         )
                     # pyuno object
                     elif str(prop_value).startswith("pyuno object"):
-                        t = "pyuno object"
+                        p_rep = "pyuno object"
                     # string
-                    elif typ == "string":
-                        t = "'{}'".format(prop_value)
+                    elif p_typ == "string":
+                        p_rep = "'{}'".format(prop_value)
                     # bool
-                    elif typ == "boolean" and prop_value == 0:
-                        t = "False"
+                    elif p_typ == "boolean" and prop_value == 0:
+                        p_rep = "False"
                     else:
-                        t = str(prop_value)
-                        t = t.replace("\n", "'\n'")
+                        p_rep = str(prop_value)
+                        p_rep = p_rep.replace("\n", "'\n'")
                 else:
-                    t = "<unknown>"
+                    p_rep = "< unknown >"
 
-                typ = typ.replace("com.sun.star.", "~ ")
+                p_typ = p_typ.replace("com.sun.star.", "~ ")
 
-                P[p_name]["type"] = typ
-                P[p_name]["repr"] = (t[:120] + "..") if len(t) > 120 else t
+                P[p_name]["type"] = p_typ
+                P[p_name]["repr"] = (p_rep[:120] + "..") if len(p_rep) > 120 else p_rep
                 P[p_name]["items"] = []
 
             except Exception as err:
-                P[p_name]["type"] = typ
-                P[p_name]["repr"] = "< unknown p: " + str(err) + " >"
+                P[p_name]["type"] = p_typ
+                P[p_name]["repr"] = "< Error property: " + str(err) + " >"
                 P[p_name]["items"] = []
 
         return P
@@ -164,7 +169,9 @@ class Inspector:
         try:
             inspector = self.introspection.inspect(object)
             methods = inspector.getMethods(_METHOD_CONCEPT_ALL)
-        except:
+        except Exception as err:
+            if _DEBUG:
+                print(err)
             return M
 
         for method in methods:
@@ -175,9 +182,9 @@ class Inspector:
                 # description
                 M[m_name]["desc"] = "uno_method"
                 # type
-                typ = str(method.getReturnType().getName())
-                typ = typ.replace("com.sun.star.", "~ ")
-                M[m_name]["type"] = typ
+                m_typ = str(method.getReturnType().getName())
+                m_typ = m_typ.replace("com.sun.star.", "~ ")
+                M[m_name]["type"] = m_typ
 
                 all_items = []
                 # name access
@@ -233,17 +240,15 @@ class Inspector:
                 params = params + ")"
                 params = params.replace(", )", " )")
 
-                if params == "()":
-                    params = "()"
+                # if params == "()":
+                #     params = "()"
 
                 M[m_name]["repr"] = str(params)
             except Exception as err:
                 # M[m_name] = {}
                 M[m_name]["type"] = "ERROR"
-                M[m_name]["repr"] = "< unknown m: " + str(err) + " >"
+                M[m_name]["repr"] = "< Error method: " + str(err) + " >"
                 M[m_name]["items"] = []
-        # except:
-        # pass
 
         return M
 
@@ -278,7 +283,7 @@ class Inspector:
 
                 # repr
                 if typ == "dict":
-                    t = "<dict with {} elements>".format(str(len(repr(atr))))
+                    t = "< dict with {} elements >".format(str(len(repr(atr))))
                 else:
                     t = repr(atr)
 
@@ -287,8 +292,9 @@ class Inspector:
                 all_items = []
                 S[name]["items"] = all_items
 
-        except:
-            pass
+        except Exception as err:
+            if _DEBUG:
+                print(err)
 
         return S
 
@@ -314,8 +320,9 @@ class Inspector:
                     V[idx]["type"] = typ
                     V[idx]["repr"] = t
                     V[idx]["items"] = []
-            except:
-                pass
+            except Exception as err:
+                if _DEBUG:
+                    print(err)
 
         return V
 
@@ -338,13 +345,13 @@ class Inspector:
             # inspect UNO properties and methods
             p = self._inspectProperties(object)
             m = self._inspectMethods(object)
+
             # UNO object
             if p and m:
                 context.update(sorted(p.items()))
                 context.update(sorted(m.items()))
             else:
                 v = self._inspectPropertyValue(object)
-                # print(str(v))
                 if v:
                     context.update(sorted(v.items()))
 
@@ -356,7 +363,7 @@ class Inspector:
 
         # display result in terminal
         if output == "console":
-            for key, value in sorted(context.items()):
+            for key, value in context.items():
                 # print('KEY: ' + str(key))
                 # print('VALUE: ' + str(value))
                 for tp, rep in value.items():
