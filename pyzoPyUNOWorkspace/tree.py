@@ -41,9 +41,12 @@ SNIPPET_SUFIX = config.get("GENERAL", "snippet_sufix")
 # connect documentation database
 conn = sqlite3.connect(UNODOC_DB)
 
-# JSON serialization paths
-RESULTFILE = "result.txt"
-RESULT = os.path.join(WORKSPACE_DIR, RESULTFILE)
+# JSON serialization path
+RESULTFILE_JSON = "result.txt"
+RESULT_JSON = os.path.join(WORKSPACE_DIR, RESULTFILE_JSON)
+# Pickle path
+RESULTFILE_PICKLE = "result.pkl"
+RESULT_PICKLE = os.path.join(WORKSPACE_DIR, RESULTFILE_PICKLE)
 # History file
 HISTORYFILE = "ws_history.txt"
 HISTORY = os.path.join(WORKSPACE_DIR, HISTORYFILE)
@@ -53,15 +56,15 @@ DIALOG_INPUT = []
 # Result file
 def createResultFile():
 
-    if os.path.exists(RESULT):
-        os.remove(RESULT)
+    if os.path.exists(RESULT_JSON):
+        os.remove(RESULT_JSON)
 
-    with open(RESULT, "w") as f:
-        f.write("{}")
+    with open(RESULT_JSON, "w") as f:
+        f.write('{}')
 
 
 def getResultFilePath():
-    return RESULT
+    return  RESULT_JSON
 
 
 # History file
@@ -207,11 +210,13 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
                 createResultFile()
             else:
                 shell.executeCommand(
-                    "Inspector().inspect(" + str(self._name) + ")\n"
-                )
+                     "Inspector().inspect(" + str(self._name) + ")\n")
             # via pyzo
             future = shell._request.dir2(self._name)
             future.add_done_callback(self.processResponse)
+
+            if pyzo.config.tools.pyzopyunoworkspace.clearScreenAfter:
+                shell.clearScreen()
 
     def goUp(self):
         """ goUp()
@@ -265,11 +270,11 @@ class PyUNOWorkspaceProxy(QtCore.QObject):
         else:
             response = future.result()
 
-        # via pyzo
+        # Introspection via pyzo
         self._variables = response
 
-        # via unoinspect - read json
-        with open(RESULT) as resultf:
+        # Introspection via unoinspect - read json
+        with open(RESULT_JSON) as resultf:
             self._uno_dict = load(resultf)
         self.haveNewData.emit()
 
@@ -291,14 +296,12 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         QtWidgets.QTreeWidget.__init__(self, parent)
 
         # create JSON serialization file
-        if not os.path.isfile(RESULT):
-            with open(RESULT, "w") as fl:
-                fl.write("{}")
+        if not os.path.isfile(RESULT_JSON) or not os.path.isfile(RESULT_PICKLE):
+            createResultFile()
 
         # create history file
         if not os.path.isfile(HISTORY):
-            with open(HISTORY, "w") as hfl:
-                hfl.write("\n")
+            createHistoryFile()
 
         self._config = parent._config
         self.old_item = ""
@@ -423,7 +426,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             typ = item.text(1)
             rep = item.text(2)
 
-            if name == "value" and typ == "pyuno.struct":
+            if name == "value" and (typ == "pyuno.struct" or typ == "struct"):
                 pass
             elif rep == "( )":
                 inspect_item = inspect_item + "()"
@@ -469,28 +472,24 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
         """ fillWidget
         Fill/activate widgets.
         """
-        try:
+
+        if "getByName" in self._proxy._uno_dict.keys():
             if self._proxy._uno_dict["getByName"]["items"]:
                 self.parent()._element_names.addItem("--Name--")
                 self.parent()._element_names.addItems(
                     self._proxy._uno_dict["getByName"]["items"]
                 )
                 self.parent()._element_names.setEnabled(True)
-        except:
-            pass
 
-        try:
-
+        if "getByIndex" in self._proxy._uno_dict.keys():
             if self._proxy._uno_dict["getByIndex"]["items"]:
                 self.parent()._element_index.addItem("--Index--")
                 self.parent()._element_index.addItems(
                     self._proxy._uno_dict["getByIndex"]["items"]
                 )
                 self.parent()._element_index.setEnabled(True)
-        except:
-            pass
 
-        try:
+        if "createEnumeration" in self._proxy._uno_dict.keys():
             if self._proxy._uno_dict["createEnumeration"]["items"]:
                 self.parent()._enumerate_index.addItem("--Enumeration--")
                 self.parent()._enumerate_index.addItem("All")
@@ -498,20 +497,15 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
                     self._proxy._uno_dict["createEnumeration"]["items"]
                 )
                 self.parent()._enumerate_index.setEnabled(True)
-        except:
-            pass
 
-        try:
+        if "getCurrentSelection" in self._proxy._uno_dict.keys():
             if self._proxy._uno_dict["getCurrentSelection"]:
                 self.parent()._selection.setEnabled(True)
-        except:
-            pass
 
     def fillWorkspace(self):
         """ fillWorkspace()
         Update the workspace tree.
         """
-        bChecked = False
 
         # Clear tree and widget first
         self.clear()
@@ -537,12 +531,13 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
             if len(parts) < 4:
                 continue
-
+            # -- Name --
             name = parts[0]
-            try:
+            # -- Type, Repr --
+            if name in self._proxy._uno_dict.keys():
                 typ = str(self._proxy._uno_dict[name]["type"])
                 rep = str(self._proxy._uno_dict[name]["repr"])
-            except:
+            else:
                 typ = parts[1]
                 rep = parts[-1]
 
@@ -563,22 +558,16 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             # item = PyUNOWorkspaceItem(parts, 0)
             self.addTopLevelItem(item)
 
-            # Set background color for checked items
-            if bChecked:
-                if name in self.checked_dict[self._proxy._name]:
-                    item.setBackground(0, QtGui.QColor(224, 224, 224))
-                    item.setBackground(1, QtGui.QColor(224, 224, 224))
-                    item.setBackground(2, QtGui.QColor(224, 224, 224))
-            else:
-                item.setBackground(0, QtGui.QColor(255, 255, 255))
-                item.setBackground(1, QtGui.QColor(255, 255, 255))
-                item.setBackground(2, QtGui.QColor(255, 255, 255))
+            # Set background color
+            # item.setBackground(0, QtGui.QColor(255, 255, 255))
+            # item.setBackground(1, QtGui.QColor(255, 255, 255))
+            # item.setBackground(2, QtGui.QColor(255, 255, 255))
 
             # Set tooltip
-            tt = "%s: %s" % (parts[0], parts[-1])
-            item.setToolTip(0, tt)
-            item.setToolTip(1, tt)
-            item.setToolTip(2, tt)
+            # tt = "%s: %s" % (parts[0], parts[-1])
+            # item.setToolTip(0, tt)
+            # item.setToolTip(1, tt)
+            # item.setToolTip(2, tt)
 
         # scroll on the start
         self.scrollToItem(self.topLevelItem(0))
@@ -709,6 +698,11 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
             self.parent()._desc_all_items.setText(str(len(rows)))
             self.parent()._desc_counter.setText("0")
 
+            # set font size
+            font = self.parent()._description.font()
+            font.setPointSize(self._config.fontSizeHelp)
+            self.parent()._description.setFont(QtGui.QFont(font))
+
             try:
                 n = 0
                 ok_counter = 0
@@ -768,6 +762,7 @@ class PyUNOWorkspaceTree(QtWidgets.QTreeWidget):
 
                     n += 1
 
+                # show description
                 txt = good + bad
 
                 self.parent()._description.setText(txt)
